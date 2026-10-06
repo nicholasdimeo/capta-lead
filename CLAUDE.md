@@ -1,4 +1,4 @@
-# LeadStand — note per chi lavora sul codice (anche Claude)
+# Capta Lead — note per chi lavora sul codice (anche Claude)
 
 - Lingua: codice, commenti, nomi di file/funzioni e testi in **italiano**, semplici (progetto gemello: Plexus).
 - Tutto ciò che è personalizzabile sta in `config/brand.json` (+ `config/logo.svg`): niente nomi, colori, testi o domande cablati nel codice.

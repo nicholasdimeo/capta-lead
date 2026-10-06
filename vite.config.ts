@@ -10,8 +10,8 @@ const brand = JSON.parse(readFileSync(new URL('./config/brand.json', import.meta
 const pacchetto = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
 
 // Dove verrà pubblicata l'app: "/" (radice del dominio, il caso normale) oppure una sottocartella,
-// es. LEADSTAND_BASE=/leadstand/ npm run build  →  https://sito.it/leadstand/
-const base = normalizzaBase(process.env.LEADSTAND_BASE)
+// es. CAPTA_BASE=/capta-lead/ npm run build  →  https://sito.it/capta-lead/
+const base = normalizzaBase(process.env.CAPTA_BASE)
 
 function normalizzaBase(valore: string | undefined): string {
   let b = (valore ?? '/').trim()

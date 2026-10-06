@@ -1,6 +1,6 @@
-# LeadStand — raccolta contatti allo stand
+# Capta Lead — raccolta contatti allo stand
 
-LeadStand è un'app per registrare i contatti (lead) che si fermano allo stand in fiera o a un congresso:
+Capta Lead è un'app per registrare i contatti (lead) che si fermano allo stand in fiera o a un congresso:
 anagrafica, questionario a risposta chiusa, consenso privacy, note, categoria e foto del biglietto da visita.
 Funziona **anche senza rete**: tutto viene salvato sul tablet o sul telefono e inviato a **Plexus**
 appena torna la connessione, senza fare nulla e senza doppioni. Dall'app si scaricano anche i report
@@ -41,7 +41,7 @@ npm run finto-plexus   # avvia il Plexus finto su http://localhost:8787 (in un'a
 npm test               # test unitari (dati, coda, motore di sincronizzazione, report)
 npm run test:e2e       # prove nel browser vero, anche offline (fa da sé la build e avvia i server)
 npm run build          # crea la versione da mettere online nella cartella dist/
-npm run pacchetto      # impacchetta dist/ in leadstand-<versione>.zip
+npm run pacchetto      # impacchetta dist/ in capta-lead-<versione>.zip
 npm run icone          # rigenera le icone dell'app da config/logo.svg
 ```
 
@@ -76,14 +76,14 @@ l'unico server con cui parla è Plexus.
 npm run pacchetto
 ```
 
-crea `leadstand-<versione>.zip` con il contenuto di `dist/`, comodo da caricare su un hosting o da
+crea `capta-lead-<versione>.zip` con il contenuto di `dist/`, comodo da caricare su un hosting o da
 passare a chi gestisce il server (va scompattato nella cartella pubblicata: `index.html` alla radice).
 
-L'app è costruita per stare alla **radice del dominio** (es. `https://leadstand.sgmpharma.it/`). Se invece
-deve stare in una sottocartella (es. `https://www.sgmpharma.it/leadstand/`), costruiscila così:
+L'app è costruita per stare alla **radice del dominio** (es. `https://capta.sgmpharma.it/`). Se invece
+deve stare in una sottocartella (es. `https://www.sgmpharma.it/capta-lead/`), costruiscila così:
 
 ```bash
-LEADSTAND_BASE=/leadstand/ npm run build
+CAPTA_BASE=/capta-lead/ npm run build
 ```
 
 Non serve nessuna regola di "riscrittura" sul server: le pagine interne usano l'indirizzo con `#`.

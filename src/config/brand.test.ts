@@ -16,7 +16,7 @@ describe('configurazione brand', () => {
 
   it('con un file vuoto usa valori di riserva sensati senza rompersi', () => {
     const b = validaBrand({}, 'logo.svg')
-    expect(b.app.nome).toBe('LeadStand')
+    expect(b.app.nome).toBe('Capta Lead')
     expect(b.lingue.principale).toBe('it')
     expect(b.linee.generale).toBe('Generale')
     expect(b.linea_predefinita).toBe('generale')

@@ -1,16 +1,16 @@
-# Pubblicare LeadStand su Vercel (piano gratuito)
+# Pubblicare Capta Lead su Vercel (piano gratuito)
 
 Serve un account GitHub e un account Vercel (si può creare entrando con GitHub). Tutto quello che
 segue si fa una volta sola: da quel momento ogni modifica caricata su GitHub viene pubblicata da sola.
 
 ## 1. Caricare il codice su GitHub
 
-1. Su github.com: **New repository**, nome `leadstand`, privato o pubblico come preferisci, **senza**
+1. Su github.com: **New repository**, nome `capta-lead`, privato o pubblico come preferisci, **senza**
    aggiungere README o .gitignore (ci sono già). Crea.
 2. Nel terminale, dentro la cartella del progetto:
 
 ```bash
-git remote add origin https://github.com/TUO-NOME-UTENTE/leadstand.git
+git remote add origin https://github.com/TUO-NOME-UTENTE/capta-lead.git
 ```
 
 ```bash
@@ -21,17 +21,17 @@ GitHub chiederà di accedere (la prima volta apre il browser o chiede un token).
 
 ## 2. Collegare Vercel
 
-1. Su vercel.com: **Add New → Project**, scegli il repository `leadstand`.
+1. Su vercel.com: **Add New → Project**, scegli il repository `capta-lead`.
 2. Vercel riconosce da solo che è un progetto Vite (lo legge dal file `vercel.json`): comando di build
    `npm run build`, cartella da pubblicare `dist`. Non serve cambiare nulla. **Deploy**.
-3. Dopo un minuto l'app è online a un indirizzo del tipo `https://leadstand-xxxx.vercel.app`.
+3. Dopo un minuto l'app è online a un indirizzo del tipo `https://capta-lead-xxxx.vercel.app`.
 
-Per un indirizzo tuo (es. `leadstand.tuodominio.it`): nel progetto Vercel, **Settings → Domains**, e
+Per un indirizzo tuo (es. `capta.tuodominio.it`): nel progetto Vercel, **Settings → Domains**, e
 segui le istruzioni per il DNS del dominio. HTTPS è automatico in entrambi i casi.
 
 ## 3. Dire a Plexus l'indirizzo dell'app
 
-Chi gestisce Plexus deve inserire l'indirizzo (es. `https://leadstand-xxxx.vercel.app`) nella variabile
+Chi gestisce Plexus deve inserire l'indirizzo (es. `https://capta-lead-xxxx.vercel.app`) nella variabile
 `PLEXUS_API_ORIGINI`, altrimenti il browser blocca le chiamate dall'app a Plexus (regola CORS).
 
 ## 4. Installare sui tablet

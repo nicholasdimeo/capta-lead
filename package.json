@@ -1,5 +1,5 @@
 {
-  "name": "leadstand",
+  "name": "capta-lead",
   "private": true,
   "version": "1.0.0",
   "description": "App di raccolta lead allo stand (PWA offline-first, collegabile a Plexus)",

@@ -1,4 +1,4 @@
-// Impacchetta la cartella dist/ in uno zip pronto da caricare sull'hosting: leadstand-<versione>.zip
+// Impacchetta la cartella dist/ in uno zip pronto da caricare sull'hosting: capta-lead-<versione>.zip
 // Si lancia dopo "npm run build" con: npm run pacchetto
 import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync, rmSync } from 'node:fs'

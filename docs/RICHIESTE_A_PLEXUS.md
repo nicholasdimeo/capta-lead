@@ -1,9 +1,9 @@
 # Richieste a Plexus — tutte accolte con l'API 1.1 (06/10/2026)
 
-Il contratto 1.1 di Plexus (compatibile con la 1.0) ha chiuso tutte le richieste fatte da LeadStand.
+Il contratto 1.1 di Plexus (compatibile con la 1.0) ha chiuso tutte le richieste fatte da Capta Lead.
 Questo file resta come memoria e per annotare eventuali richieste future.
 
-| Richiesta | Risposta di Plexus 1.1 | Cosa fa LeadStand |
+| Richiesta | Risposta di Plexus 1.1 | Cosa fa Capta Lead |
 | --- | --- | --- |
 | Categorie suggerite in `POST /eventi` | Accettate in `POST /eventi` e `PUT /eventi/{id}` | Le manda a ogni salvataggio dell'evento |
 | Esito della mail in `GET /eventi/{id}/lead` | Campo `ringraziamento` `{esito, inviato_il}` su ogni lead | Lo mostra su ogni dispositivo, con la data |

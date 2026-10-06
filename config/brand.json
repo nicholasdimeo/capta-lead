@@ -1,8 +1,8 @@
 {
   "$commento": "Tutto ciò che cambia da un'azienda all'altra sta qui. Vedi docs/ADATTARE_AD_ALTRA_AZIENDA.md",
   "app": {
-    "nome": "LeadStand",
-    "nome_breve": "LeadStand",
+    "nome": "Capta Lead",
+    "nome_breve": "Capta Lead",
     "descrizione": "Raccolta contatti allo stand, anche senza rete"
   },
   "azienda": {

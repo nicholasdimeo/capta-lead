@@ -10,6 +10,8 @@ export class ArchivioLocale extends Dexie {
   coda!: EntityTable<Operazione, 'id'>
   impostazioni!: Table<Impostazione, string>
 
+  // Il nome interno del database resta "leadstand" anche se l'app si chiama diversamente: cambiarlo
+  // farebbe perdere i dati già salvati sui dispositivi.
   constructor(nome = 'leadstand') {
     super(nome)
     // Gli indici (dopo la virgola) servono solo per cercare in fretta; i campi non elencati

@@ -1,4 +1,4 @@
-# Adattare LeadStand a un'altra azienda
+# Adattare Capta Lead a un'altra azienda
 
 L'app è costruita per essere "white label": per cambiare azienda non si tocca il codice, ma solo la
 cartella `config/` (più, se vuoi, i testi dell'interfaccia). Poi si ricostruisce l'app.

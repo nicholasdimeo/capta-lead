@@ -127,7 +127,7 @@ export function validaBrand(grezzo: unknown, logo: string): Brand {
 
   const privacy = oggetto(g.privacy)
   const plexus = oggetto(g.plexus)
-  const nomeApp = stringa(app.nome, 'LeadStand')
+  const nomeApp = stringa(app.nome, 'Capta Lead')
   return {
     app: { nome: nomeApp, nome_breve: stringa(app.nome_breve, nomeApp), descrizione: stringa(app.descrizione) },
     azienda: { nome: stringa(azienda.nome, nomeApp), sito: stringa(azienda.sito) },
