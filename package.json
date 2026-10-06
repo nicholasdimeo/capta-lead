@@ -1,7 +1,7 @@
 {
   "name": "leadstand",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "App di raccolta lead allo stand (PWA offline-first, collegabile a Plexus)",
   "type": "module",
   "scripts": {
@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "icone": "node scripts/genera-icone.mjs",
-    "typecheck": "tsc -b --noEmit"
+    "typecheck": "tsc -b --noEmit",
+    "pacchetto": "node scripts/pacchetto.mjs"
   },
   "dependencies": {
     "@fontsource/public-sans": "^5.3.0",

@@ -41,6 +41,7 @@ npm run finto-plexus   # avvia il Plexus finto su http://localhost:8787 (in un'a
 npm test               # test unitari (dati, coda, motore di sincronizzazione, report)
 npm run test:e2e       # prove nel browser vero, anche offline (fa da sé la build e avvia i server)
 npm run build          # crea la versione da mettere online nella cartella dist/
+npm run pacchetto      # impacchetta dist/ in leadstand-<versione>.zip
 npm run icone          # rigenera le icone dell'app da config/logo.svg
 ```
 
@@ -59,10 +60,32 @@ Offline*; oppure, nella versione costruita (`npm run build` + `npm run preview`)
 
 ### Mettere online l'app
 
-`npm run build` produce la cartella `dist/`: è un sito statico, basta copiarla su qualsiasi hosting
-che serva file in **HTTPS** (Netlify, Vercel, GitHub Pages, un server Nginx aziendale…). HTTPS è
-obbligatorio: senza, il browser non permette l'installazione e il funzionamento offline.
-Non serve nessun server dell'app: l'unico server con cui parla è Plexus.
+```bash
+npm run build
+```
+
+produce la cartella `dist/`: è un sito statico, basta copiarla su qualsiasi hosting che serva file in
+**HTTPS** (Netlify, Vercel, GitHub Pages, un server Nginx aziendale…). HTTPS è obbligatorio: senza, il
+browser non permette l'installazione e il funzionamento offline. Non serve nessun server dell'app:
+l'unico server con cui parla è Plexus.
+
+```bash
+npm run pacchetto
+```
+
+crea `leadstand-<versione>.zip` con il contenuto di `dist/`, comodo da caricare su un hosting o da
+passare a chi gestisce il server (va scompattato nella cartella pubblicata: `index.html` alla radice).
+
+L'app è costruita per stare alla **radice del dominio** (es. `https://leadstand.sgmpharma.it/`). Se invece
+deve stare in una sottocartella (es. `https://www.sgmpharma.it/leadstand/`), costruiscila così:
+
+```bash
+LEADSTAND_BASE=/leadstand/ npm run build
+```
+
+Non serve nessuna regola di "riscrittura" sul server: le pagine interne usano l'indirizzo con `#`.
+Il file `sw.js` (il service worker) e `manifest.webmanifest` devono essere serviti dalla stessa cartella di
+`index.html`, cosa che qualsiasi hosting statico fa da solo.
 
 Il Plexus vero deve conoscere l'indirizzo da cui è servita l'app (variabile `PLEXUS_API_ORIGINI`
 sul server, oppure tutte le origini), altrimenti il browser blocca le chiamate (CORS).

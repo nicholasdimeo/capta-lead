@@ -8,3 +8,4 @@ playwright-report
 e2e/.cache
 node_modules/.tmp
 finto-plexus/dati-*.json
+*.zip

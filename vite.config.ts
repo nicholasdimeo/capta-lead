@@ -9,6 +9,18 @@ import { VitePWA } from 'vite-plugin-pwa'
 const brand = JSON.parse(readFileSync(new URL('./config/brand.json', import.meta.url), 'utf8'))
 const pacchetto = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
 
+// Dove verrà pubblicata l'app: "/" (radice del dominio, il caso normale) oppure una sottocartella,
+// es. LEADSTAND_BASE=/leadstand/ npm run build  →  https://sito.it/leadstand/
+const base = normalizzaBase(process.env.LEADSTAND_BASE)
+
+function normalizzaBase(valore: string | undefined): string {
+  let b = (valore ?? '/').trim()
+  if (!b) return '/'
+  if (!b.startsWith('/')) b = `/${b}`
+  if (!b.endsWith('/')) b = `${b}/`
+  return b
+}
+
 /** Sostituisce %NOME_APP% in index.html con il nome scelto in brand.json. */
 function nomeAppInHtml() {
   return {
@@ -20,6 +32,7 @@ function nomeAppInHtml() {
 }
 
 export default defineConfig({
+  base,
   define: { __VERSIONE_APP__: JSON.stringify(pacchetto.version) },
   plugins: [
     react(),
@@ -36,8 +49,8 @@ export default defineConfig({
         background_color: brand.tema.sfondo,
         display: 'standalone',
         orientation: 'any',
-        start_url: '/',
-        scope: '/',
+        start_url: base,
+        scope: base,
         icons: [
           { src: 'icone/icona-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icone/icona-512.png', sizes: '512x512', type: 'image/png' },
