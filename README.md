@@ -60,6 +60,9 @@ Offline*; oppure, nella versione costruita (`npm run build` + `npm run preview`)
 
 ### Mettere online l'app
 
+Il modo più semplice, gratuito per un progetto personale, è GitHub + Vercel: istruzioni passo passo in
+[docs/PUBBLICARE_SU_VERCEL.md](docs/PUBBLICARE_SU_VERCEL.md). In generale:
+
 ```bash
 npm run build
 ```

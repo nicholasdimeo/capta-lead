@@ -1,0 +1,6 @@
+# File che non servono a Vercel per costruire l'app
+e2e
+finto-plexus
+test-results
+playwright-report
+*.zip
