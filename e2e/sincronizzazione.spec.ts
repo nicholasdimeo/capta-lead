@@ -1,0 +1,143 @@
+import { test, expect } from '@playwright/test'
+import { apriApp, azzeraFinto, collegaPlexus, creaEvento, dumpFinto, registraContatto, FINTO } from './aiuti'
+
+test.beforeEach(async ({ request }) => {
+  await azzeraFinto(request)
+})
+
+test('contatto registrato offline (con foto): al ritorno della rete arriva al finto Plexus una sola volta', async ({ page, context, request }) => {
+  await apriApp(page)
+  await collegaPlexus(page)
+  await creaEvento(page, 'Fiera offline 2026')
+  // l'evento viene inviato subito (siamo in rete)
+  await expect.poll(async () => (await dumpFinto(request)).eventi.length).toBe(1)
+
+  // --- cade la rete: l'app deve ripartire dalla cache e funzionare ---
+  await context.setOffline(true)
+  await page.reload()
+  await expect(page.getByText('Senza rete', { exact: false })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Nuovo contatto' })).toBeVisible()
+  await registraContatto(page, { nome: 'Anna', cognome: 'Bianchi', email: 'anna@clinica.it', azienda: 'Clinica Sorriso', categoria: 'caldo', conFoto: true })
+  await expect(page.getByText('Anna Bianchi')).toBeVisible()
+  await expect(page.getByText('In coda per Plexus')).toBeVisible()
+  expect((await dumpFinto(request)).lead).toHaveLength(0)
+
+  // --- torna la rete: parte da sola ---
+  await context.setOffline(false)
+  await expect(page.getByText('Su Plexus').first()).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByText('Mail di ringraziamento inviata')).toBeVisible()
+  await expect(page.getByText('2 foto caricate')).toBeVisible({ timeout: 20_000 })
+
+  const dump = await dumpFinto(request)
+  expect(dump.lead).toHaveLength(1)
+  expect(dump.lead[0]).toMatchObject({ nome: 'Anna', cognome: 'Bianchi', email: 'anna@clinica.it', consenso: 'S', categoria: 'caldo', note: 'vuole il listino' })
+  expect(dump.lead[0].risposte['Cosa le interessa ricevere?']).toBe('Un campione, Il listino')
+  expect(dump.lead[0].uuid).toMatch(/^[0-9a-f-]{36}$/)
+  expect(dump.foto).toHaveLength(2)
+  expect(dump.foto.map((f) => f.tipo).sort()).toEqual(['biglietto', 'volto'])
+  expect(dump.foto.every((f) => f.mime === 'image/jpeg' && f.dimensione > 0)).toBe(true)
+  // una sola richiesta per oggetto: niente doppioni
+  expect(dump.registro.filter((r) => r.metodo === 'POST' && r.percorso === '/eventi')).toHaveLength(1)
+  expect(dump.registro.filter((r) => r.metodo === 'POST' && r.percorso === '/eventi/1/lead')).toHaveLength(1)
+  expect(dump.registro.filter((r) => r.metodo === 'POST' && r.percorso === '/lead/1/foto')).toHaveLength(2)
+
+  // --- la scheda del contatto mostra foto e stato; una modifica rimanda la lead senza doppioni ---
+  await page.getByText('Anna Bianchi').click()
+  await expect(page.locator('.foto-voce')).toHaveCount(2)
+  await page.getByRole('link', { name: 'Modifica' }).click()
+  await page.getByLabel('Azienda / studio').fill('Clinica Sorriso SRL')
+  await page.getByRole('button', { name: 'Avanti' }).click()
+  await page.getByRole('button', { name: 'Avanti' }).click()
+  await page.getByRole('button', { name: 'Salva contatto' }).click()
+  await expect.poll(async () => (await dumpFinto(request)).lead[0].azienda, { timeout: 15_000 }).toBe('Clinica Sorriso SRL')
+  const dopo = await dumpFinto(request)
+  expect(dopo.lead).toHaveLength(1)
+  expect(dopo.foto).toHaveLength(2)
+})
+
+test('un evento creato in Plexus arriva nell\'app e i contatti registrati lì finiscono in quell\'evento', async ({ page, request }) => {
+  await apriApp(page)
+  await collegaPlexus(page)
+  await request.post(`${FINTO}/_test/eventi`, { data: { nome: 'Congresso da Plexus', luogo: 'Milano' } })
+  await page.getByRole('link', { name: 'Impostazioni' }).click()
+  await page.getByRole('button', { name: 'Sincronizza ora' }).click()
+  await page.getByRole('button', { name: 'Indietro' }).click()
+  await expect(page.getByText('Congresso da Plexus')).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText('Da Plexus', { exact: true })).toBeVisible()
+  await page.getByText('Congresso da Plexus').click()
+  await registraContatto(page, { nome: 'Marco', cognome: 'Rossi', email: 'marco@studio.it', consenso: 'No' })
+  await expect(page.getByText('Su Plexus').first()).toBeVisible({ timeout: 20_000 })
+  const dump = await dumpFinto(request)
+  expect(dump.eventi).toHaveLength(1) // nessun doppione dell'evento
+  expect(dump.lead).toHaveLength(1)
+  expect(dump.lead[0]).toMatchObject({ nome: 'Marco', consenso: 'N' })
+})
+
+test('codice revocato: l\'app avvisa, non perde i contatti e riparte dopo il ricollegamento', async ({ page, request }) => {
+  await apriApp(page)
+  await collegaPlexus(page)
+  await creaEvento(page, 'Evento con revoca')
+  await expect.poll(async () => (await dumpFinto(request)).eventi.length).toBe(1)
+  await request.post(`${FINTO}/_test/config`, { data: { revoca_token: 'plx_prova' } })
+  await registraContatto(page, { nome: 'Luca', cognome: 'Verdi', email: 'luca@esempio.it' })
+  await expect(page.getByText('Il collegamento a Plexus non è più valido', { exact: false })).toBeVisible({ timeout: 20_000 })
+  expect((await dumpFinto(request)).lead).toHaveLength(0)
+  await page.getByRole('link', { name: 'Apri impostazioni' }).click()
+  await page.getByLabel('Codice personale').fill('plx_nuovo')
+  await page.getByRole('button', { name: 'Collega', exact: true }).click()
+  await expect(page.getByText('SGM Pharma (finto)')).toBeVisible()
+  await expect.poll(async () => (await dumpFinto(request)).lead.length, { timeout: 15_000 }).toBe(1)
+})
+
+test('senza Plexus l\'app vive da sola: evento, contatto, ricerca e filtri', async ({ page }) => {
+  await apriApp(page)
+  await creaEvento(page, 'Evento solo locale')
+  await registraContatto(page, { nome: 'Giulia', cognome: 'Neri', azienda: 'Farmacia Centrale', categoria: 'curioso' })
+  await registraContatto(page, { nome: 'Paolo', cognome: 'Blu', categoria: 'caldo', consenso: 'No' })
+  await expect(page.getByText('Salvato sul dispositivo').first()).toBeVisible()
+  await page.getByRole('searchbox').fill('farmacia')
+  await expect(page.getByText('Giulia Neri')).toBeVisible()
+  await expect(page.getByText('Paolo Blu')).toHaveCount(0)
+  await page.getByRole('searchbox').fill('')
+  await page.getByRole('button', { name: 'caldo', exact: true }).click()
+  await expect(page.getByText('Paolo Blu')).toBeVisible()
+  await expect(page.getByText('Giulia Neri')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Tutti' }).click()
+  await page.getByLabel('Consenso').selectOption('si')
+  await expect(page.getByText('Giulia Neri')).toBeVisible()
+  await expect(page.getByText('Paolo Blu')).toHaveCount(0)
+})
+
+test('bozza automatica: se la pagina si ricarica a metà registrazione, i dati non vanno persi', async ({ page }) => {
+  await apriApp(page)
+  await creaEvento(page, 'Evento con bozza')
+  await page.getByRole('link', { name: 'Nuovo contatto' }).click()
+  await page.getByLabel('Nome', { exact: true }).fill('Bozza')
+  await page.getByLabel('Cognome').fill('Salvata')
+  await page.waitForTimeout(800) // la bozza si scrive dopo un piccolo ritardo
+  await page.reload()
+  await expect(page.getByText('Ho recuperato i dati che stavi inserendo.')).toBeVisible()
+  await expect(page.getByLabel('Nome', { exact: true })).toHaveValue('Bozza')
+  await expect(page.getByLabel('Cognome')).toHaveValue('Salvata')
+  // annullando, la bozza viene cancellata
+  await page.getByRole('button', { name: 'Annulla' }).click()
+  await page.getByRole('button', { name: 'Conferma' }).click()
+  await page.getByRole('link', { name: 'Nuovo contatto' }).click()
+  await expect(page.getByLabel('Nome', { exact: true })).toHaveValue('')
+})
+
+test('archiviare un evento: sparisce dall\'elenco, resta tra gli archiviati e viene chiuso anche nel finto Plexus', async ({ page, request }) => {
+  await apriApp(page)
+  await collegaPlexus(page)
+  await creaEvento(page, 'Evento da archiviare')
+  await expect.poll(async () => (await dumpFinto(request)).eventi.length).toBe(1)
+  await page.getByRole('link', { name: 'Modifica evento' }).click()
+  await page.getByRole('button', { name: 'Archivia evento' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Archivia evento' }).click()
+  await expect(page.getByRole('heading', { name: 'Eventi' })).toBeVisible()
+  await expect(page.getByText('Evento da archiviare')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Mostra archiviati (1)' }).click()
+  await expect(page.getByText('Evento da archiviare')).toBeVisible()
+  await expect(page.getByText('Archiviato', { exact: true })).toBeVisible()
+  await expect.poll(async () => (await request.get(`${FINTO}/_test/dump`).then((r) => r.json())).eventi[0].archiviato, { timeout: 15_000 }).toBe(true)
+})

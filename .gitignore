@@ -1,0 +1,10 @@
+node_modules
+dist
+dev-dist
+.DS_Store
+*.log
+test-results
+playwright-report
+e2e/.cache
+node_modules/.tmp
+finto-plexus/dati-*.json
