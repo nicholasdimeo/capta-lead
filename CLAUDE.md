@@ -2,7 +2,7 @@
 
 - Lingua: codice, commenti, nomi di file/funzioni e testi in **italiano**, semplici (progetto gemello: Plexus).
 - Tutto ciò che è personalizzabile sta in `config/brand.json` (+ `config/logo.svg`): niente nomi, colori, testi o domande cablati nel codice.
-- Verso Plexus si usa SOLO il contratto API 1.0 (vedi `src/plexus/`). Niente campi o endpoint inventati: le richieste di modifica vanno in `docs/RICHIESTE_A_PLEXUS.md`.
+- Verso Plexus si usa SOLO il contratto API 1.1, compatibile con la 1.0 (vedi `src/plexus/`). Niente campi o endpoint inventati: le richieste di modifica vanno in `docs/RICHIESTE_A_PLEXUS.md`.
 - Il codice `plx_...` non va mai in URL, log, screenshot o file esportati.
 - Ogni scrittura che deve arrivare a Plexus accoda l'operazione **nella stessa transazione** Dexie (`src/dati/archivio.ts`); la coda si svuota solo dopo la risposta positiva di Plexus (`src/sync/motore.ts`).
 - Non cancellare dati locali senza conferma esplicita dell'utente (`useConferma`).
