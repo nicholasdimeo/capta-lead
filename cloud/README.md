@@ -35,9 +35,19 @@ uv run uvicorn capta_cloud.principale:app --reload --port 8000
 | `CAPTA_POSTA` | `console` oppure `smtp` | `console` |
 | `CAPTA_POSTA_MITTENTE`, `CAPTA_SMTP_HOST`, `CAPTA_SMTP_PORTA`, `CAPTA_SMTP_UTENTE`, `CAPTA_SMTP_PASSWORD`, `CAPTA_SMTP_TLS` | invio email in produzione | |
 | `CAPTA_INTEGRAZIONI_ATTIVE` | lavoratore che manda ai gestionali | `true` |
+| `CAPTA_ARCHIVIO_FOTO` | `disco` (cartella locale) oppure `s3` (Object Storage, obbligatorio con più server) | `disco` |
+| `CAPTA_S3_BUCKET`, `CAPTA_S3_ENDPOINT`, `CAPTA_S3_REGIONE`, `CAPTA_S3_CHIAVE`, `CAPTA_S3_SEGRETO`, `CAPTA_S3_PREFISSO` | dati dell'Object Storage compatibile S3 | |
+| `CAPTA_POSTA` = `brevo` + `CAPTA_BREVO_API_KEY`, oppure `resend` + `CAPTA_RESEND_API_KEY` | email tramite API HTTPS (consigliato: nessuna porta SMTP da sbloccare) | |
 
 Per generare le chiavi: `uv run python -c "import secrets;print(secrets.token_urlsafe(48))"` e
 `uv run python -c "from cryptography.fernet import Fernet;print(Fernet.generate_key().decode())"`.
+
+## Pubblicare
+
+C'è un `Dockerfile`: va bene per Railway, Fly.io, Render o un server con Docker. Il contenitore ascolta
+sulla porta `PORT` (8000 se non impostata). In produzione servono almeno: `CAPTA_CHIAVE_SEGRETA`,
+`CAPTA_CHIAVE_CIFRATURA`, `CAPTA_DATABASE_URL` (PostgreSQL), `CAPTA_URL_APP`, `CAPTA_ORIGINI`,
+`CAPTA_POSTA` con la sua chiave, e, con più istanze, `CAPTA_ARCHIVIO_FOTO=s3` con i dati del bucket.
 
 ## Come è fatto
 

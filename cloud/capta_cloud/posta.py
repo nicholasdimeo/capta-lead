@@ -47,13 +47,45 @@ class PostaSmtp:
             s.send_message(msg)
 
 
-_posta: PostaConsole | PostaSmtp | None = None
+def _mittente() -> tuple[str, str]:
+    """'Capta Lead <noreply@x.it>' → ('Capta Lead', 'noreply@x.it')"""
+    m = impostazioni().posta_mittente.strip()
+    if "<" in m and m.endswith(">"):
+        nome, indirizzo = m.rsplit("<", 1)
+        return nome.strip().strip('"'), indirizzo[:-1].strip()
+    return "", m
 
 
-def posta() -> PostaConsole | PostaSmtp:
+class PostaBrevo:
+    """Invio tramite l'API HTTPS di Brevo (nessuna porta SMTP da sbloccare)."""
+
+    def invia(self, m: Messaggio) -> None:
+        import httpx
+
+        nome, indirizzo = _mittente()
+        r = httpx.post("https://api.brevo.com/v3/smtp/email", headers={"api-key": impostazioni().brevo_api_key, "accept": "application/json"}, json={"sender": {"name": nome or "Capta Lead", "email": indirizzo}, "to": [{"email": m.a}], "subject": m.oggetto, "textContent": m.testo}, timeout=20)
+        r.raise_for_status()
+
+
+class PostaResend:
+    """Invio tramite l'API HTTPS di Resend."""
+
+    def invia(self, m: Messaggio) -> None:
+        import httpx
+
+        r = httpx.post("https://api.resend.com/emails", headers={"Authorization": f"Bearer {impostazioni().resend_api_key}"}, json={"from": impostazioni().posta_mittente, "to": [m.a], "subject": m.oggetto, "text": m.testo}, timeout=20)
+        r.raise_for_status()
+
+
+TipoPosta = PostaConsole | PostaSmtp | PostaBrevo | PostaResend
+_posta: TipoPosta | None = None
+
+
+def posta() -> TipoPosta:
     global _posta
     if _posta is None:
-        _posta = PostaSmtp() if impostazioni().posta == "smtp" else PostaConsole()
+        tipo = impostazioni().posta
+        _posta = PostaSmtp() if tipo == "smtp" else PostaBrevo() if tipo == "brevo" else PostaResend() if tipo == "resend" else PostaConsole()
     return _posta
 
 

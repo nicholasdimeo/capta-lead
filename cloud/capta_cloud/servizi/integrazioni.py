@@ -15,7 +15,7 @@ import httpx
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..impostazioni import impostazioni
+from ..archivio_foto import archivio_foto
 from ..modelli import Evento, Foto, Integrazione, Lead, OperazioneIntegrazione, adesso
 from ..sicurezza import decifra
 from .plexus_client import ClientPlexus, ErrorePlexus
@@ -188,14 +188,12 @@ def esegui_operazione(db: Session, client: ClientPlexus, integrazione: Integrazi
         if l.gestionale_id is None:
             _assicura(db, op.azienda_id, "invia_lead", l.id)
             return False
-        percorso = impostazioni().cartella_foto / f.percorso
-        try:
-            contenuto = percorso.read_bytes()
-        except FileNotFoundError:
+        contenuto = archivio_foto().leggi(f.percorso)
+        if contenuto is None:
             log.warning("foto %s senza file: operazione chiusa", f.uuid)
             return False
         try:
-            risposta = client.carica_foto(l.gestionale_id, contenuto, f.mime, f.tipo, percorso.name, f.uuid)
+            risposta = client.carica_foto(l.gestionale_id, contenuto, f.mime, f.tipo, f.percorso.rsplit("/", 1)[-1], f.uuid)
         except ErrorePlexus as err:
             if err.codice == 404:
                 l.gestionale_id = None

@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import Response
 from sqlalchemy import func, select
 
 from .. import VERSIONE_API
@@ -18,6 +18,7 @@ from ..impostazioni import impostazioni
 from ..modelli import Evento, Foto, Lead, Utente, adesso
 from ..schemi import EventoIn, EventoModificaIn, LeadIn, QuestionarioIn
 from ..servizi import account, integrazioni, piani
+from ..archivio_foto import archivio_foto
 
 router = APIRouter(tags=["dati"])
 
@@ -324,9 +325,7 @@ async def carica_foto(lead_id: int, file: UploadFile = File(...), tipo: str = Fo
             return JSONResponse(status_code=200, content={"foto_id": esistente.id, "tipo": esistente.tipo, "uuid": esistente.uuid, "creata": False})
     identificativo = uuid or str(uuid_lib.uuid4())
     relativo = f"{c.azienda.id}/{l.id}/{identificativo}.{MIME_FOTO[mime]}"
-    percorso = impostazioni().cartella_foto / relativo
-    percorso.parent.mkdir(parents=True, exist_ok=True)
-    percorso.write_bytes(contenuto)
+    archivio_foto().salva(relativo, contenuto, mime)
     f = Foto(uuid=identificativo, azienda_id=c.azienda.id, lead_id=l.id, tipo=tipo, percorso=relativo, mime=mime, dimensione=len(contenuto), caricata_da=c.utente.id)
     c.db.add(f)
     c.db.flush()
@@ -342,12 +341,12 @@ def foto_di_lead(lead_id: int, c: Contesto = Depends(contesto)) -> dict[str, Any
 
 
 @router.get("/lead/{lead_id}/foto/{foto_id}")
-def scarica_foto(lead_id: int, foto_id: int, c: Contesto = Depends(contesto)) -> FileResponse:
+def scarica_foto(lead_id: int, foto_id: int, c: Contesto = Depends(contesto)) -> Response:
     l = _lead_di(c, lead_id)
     f = c.db.get(Foto, foto_id)
     if not f or f.lead_id != l.id:
         raise errore(404, "foto inesistente")
-    percorso = impostazioni().cartella_foto / f.percorso
-    if not percorso.exists():
+    contenuto = archivio_foto().leggi(f.percorso)
+    if contenuto is None:
         raise errore(410, "immagine non più disponibile")
-    return FileResponse(percorso, media_type=f.mime)
+    return Response(content=contenuto, media_type=f.mime, headers={"Cache-Control": "private, max-age=86400"})

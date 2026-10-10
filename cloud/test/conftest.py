@@ -23,6 +23,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from capta_cloud import db as modulo_db  # noqa: E402
 from capta_cloud import posta as modulo_posta  # noqa: E402
+from capta_cloud import archivio_foto as modulo_foto  # noqa: E402
 from capta_cloud.principale import crea_app  # noqa: E402
 
 
@@ -37,6 +38,7 @@ def client():
         except FileNotFoundError:
             pass
     modulo_posta.azzera_posta()
+    modulo_foto.azzera_archivio_foto()
     app = crea_app()
     with TestClient(app) as c:
         yield c

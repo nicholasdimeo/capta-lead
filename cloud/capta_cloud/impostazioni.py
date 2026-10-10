@@ -22,7 +22,15 @@ class Impostazioni(BaseSettings):
 
     ambiente: str = "sviluppo"  # sviluppo | produzione | test
     database_url: str = f"sqlite:///{CARTELLA_BASE / 'dati' / 'capta.db'}"
+    # Foto: "disco" (cartella locale) oppure "s3" (Object Storage compatibile S3, per più server)
+    archivio_foto: str = "disco"
     cartella_foto: Path = CARTELLA_BASE / "dati" / "foto"
+    s3_bucket: str = ""
+    s3_endpoint: str = ""  # es. https://s3.fr-par.scw.cloud
+    s3_regione: str = ""
+    s3_chiave: str = ""
+    s3_segreto: str = ""
+    s3_prefisso: str = "foto"
 
     # Sicurezza: la chiave segreta firma i token; quella di cifratura protegge i codici dei gestionali.
     chiave_segreta: str = Field(default_factory=lambda: secrets.token_urlsafe(48))
@@ -35,7 +43,7 @@ class Impostazioni(BaseSettings):
     url_app: str = "http://localhost:5173"
     origini: str = "*"  # elenco separato da virgole, oppure * per tutte
 
-    # Email transazionali: console (stampa), smtp
+    # Email transazionali: console (stampa), smtp, brevo (API HTTPS), resend (API HTTPS)
     posta: str = "console"
     posta_mittente: str = "Capta Lead <noreply@capta-lead.it>"
     smtp_host: str = ""
@@ -43,6 +51,8 @@ class Impostazioni(BaseSettings):
     smtp_utente: str = ""
     smtp_password: str = ""
     smtp_tls: bool = True
+    brevo_api_key: str = ""
+    resend_api_key: str = ""
 
     # Integrazioni con i gestionali: il lavoratore in sottofondo che invia a Plexus
     integrazioni_attive: bool = True
