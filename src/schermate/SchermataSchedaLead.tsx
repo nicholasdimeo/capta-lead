@@ -116,6 +116,7 @@ export function SchermataSchedaLead() {
         <StatoLead lead={lead} operazioni={operazioni} collegato={collegato} nFoto={foto?.length} nFotoInviate={(foto ?? []).filter((f) => f.plexus_foto_id !== null).length} dettagliato />
         <p className="mini spazio-sopra">
           {t('lead.registrata_il', { data: formattaDataOra(lead.creato_il, lingua) })}
+          {lead.registrata_da && ` · ${t('lead.registrata_da', { nome: lead.registrata_da.nome })}`}
           {lead.aggiornato_il !== lead.creato_il && ` · ${t('lead.modificata_il', { data: formattaDataOra(lead.aggiornato_il, lingua) })}`}
           {lead.plexus_id !== null && ` · ${t('lead.id_plexus', { id: lead.plexus_id })}`}
         </p>

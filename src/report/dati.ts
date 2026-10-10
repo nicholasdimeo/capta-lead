@@ -33,6 +33,7 @@ export interface Riepilogo {
   conEmail: number
   inPlexus: number
   perCategoria: { categoria: string; n: number }[]
+  perOperatore: { operatore: string; n: number }[]
   perDomanda: ConteggioDomanda[]
 }
 
@@ -60,6 +61,7 @@ export function opzioniScelte(risposta: unknown): string[] {
 
 export function calcolaRiepilogo(c: ContenutoReport): Riepilogo {
   const perCategoria = new Map<string, number>()
+  const perOperatore = new Map<string, number>()
   let conConsenso = 0
   let senzaConsenso = 0
   let consensoNonRisposto = 0
@@ -73,6 +75,7 @@ export function calcolaRiepilogo(c: ContenutoReport): Riepilogo {
     if (l.plexus_id !== null) inPlexus++
     const cat = l.categoria || ''
     perCategoria.set(cat, (perCategoria.get(cat) ?? 0) + 1)
+    if (l.registrata_da?.nome) perOperatore.set(l.registrata_da.nome, (perOperatore.get(l.registrata_da.nome) ?? 0) + 1)
   }
   const perDomanda: ConteggioDomanda[] = c.evento.questionario.map((domanda) => {
     const conteggi = new Map<string, number>(domanda.opzioni.map((o) => [o, 0]))
@@ -92,6 +95,7 @@ export function calcolaRiepilogo(c: ContenutoReport): Riepilogo {
     conEmail,
     inPlexus,
     perCategoria: [...perCategoria.entries()].map(([categoria, n]) => ({ categoria, n })).sort((a, b) => b.n - a.n || a.categoria.localeCompare(b.categoria)),
+    perOperatore: [...perOperatore.entries()].map(([operatore, n]) => ({ operatore, n })).sort((a, b) => b.n - a.n || a.operatore.localeCompare(b.operatore)),
     perDomanda,
   }
 }

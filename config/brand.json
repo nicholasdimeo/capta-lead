@@ -160,5 +160,9 @@
   "plexus": {
     "nome_piattaforma": "Plexus",
     "url_predefinito": ""
+  },
+  "cloud": {
+    "nome": "Capta Cloud",
+    "url_predefinito": ""
   }
 }

@@ -13,6 +13,15 @@ Android, senza passare da un app store. Un solo codice per tutti i dispositivi.
 > nel codice: stanno in `config/brand.json`. Per usare l'app in un'altra azienda vedi
 > [docs/ADATTARE_AD_ALTRA_AZIENDA.md](docs/ADATTARE_AD_ALTRA_AZIENDA.md).
 
+## Due modi di usarla
+
+- **Con un account Capta Cloud** (il modo normale): l'azienda ha un suo account, più persone con ruoli
+  (amministratore, operatore), i contatti sono condivisi tra tutti i dispositivi e si vede chi ha
+  registrato cosa. Il gestionale (Plexus) si collega una volta sola dall'amministrazione e riceve
+  tutto dal cloud. Il server sta nella cartella [cloud/](cloud/README.md).
+- **Senza account**: l'app funziona da sola, solo su quel dispositivo; volendo si collega direttamente a
+  Plexus dalle impostazioni (voce "avanzato"). È il modo in cui è nata ed è ancora supportato.
+
 ## Cosa fa, in breve
 
 1. **Eventi**: crei l'evento (nome, luogo, date, linea di prodotti, lingua delle mail, questionario,
@@ -32,14 +41,16 @@ Android, senza passare da un app store. Un solo codice per tutti i dispositivi.
 
 ## Per chi sviluppa
 
-Serve [Node.js](https://nodejs.org) 20 o più recente.
+Serve [Node.js](https://nodejs.org) 20 o più recente; per il server Capta Cloud serve `uv` (vedi
+[cloud/README.md](cloud/README.md)).
 
 ```bash
 npm install            # scarica le librerie (una volta sola)
 npm run dev            # avvia l'app in sviluppo su http://localhost:5173
 npm run finto-plexus   # avvia il Plexus finto su http://localhost:8787 (in un'altra finestra)
 npm test               # test unitari (dati, coda, motore di sincronizzazione, report)
-npm run test:e2e       # prove nel browser vero, anche offline (fa da sé la build e avvia i server)
+npm run test:e2e       # prove nel browser vero, anche offline (fa da sé la build, avvia il finto Plexus e Capta Cloud)
+cd cloud && uv run uvicorn capta_cloud.principale:app --reload   # il server Capta Cloud in locale (porta 8000)
 npm run build          # crea la versione da mettere online nella cartella dist/
 npm run pacchetto      # impacchetta dist/ in capta-lead-<versione>.zip
 npm run icone          # rigenera le icone dell'app da config/logo.svg

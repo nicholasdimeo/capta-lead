@@ -28,6 +28,8 @@ export async function apriApp(page: Page): Promise<void> {
 
 export async function collegaPlexus(page: Page, codice = 'plx_prova'): Promise<void> {
   await page.getByRole('link', { name: 'Impostazioni' }).click()
+  // il collegamento diretto a Plexus sta sotto "avanzato": si apre solo se il campo non è già visibile
+  if (!(await page.getByLabel('Indirizzo di Plexus').isVisible())) await page.getByRole('button', { name: 'Collegamento diretto a Plexus (avanzato)' }).click()
   await page.getByLabel('Indirizzo di Plexus').fill(FINTO)
   await page.getByLabel('Codice personale').fill(codice)
   await page.getByRole('button', { name: 'Collega', exact: true }).click()

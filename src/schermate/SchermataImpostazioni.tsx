@@ -6,7 +6,11 @@ import { Pagina } from '../componenti/Pagina'
 import { Campo } from '../componenti/Campo'
 import { Pillola } from '../componenti/Pillola'
 import { SceltaLingua } from '../componenti/Chips'
-import { IconaNuvola, IconaSync } from '../componenti/Icone'
+import { IconaGiu, IconaNuvola, IconaPersona, IconaSu, IconaSync } from '../componenti/Icone'
+import { Link } from 'react-router-dom'
+import { creaApiCapta } from '../capta/api'
+import { dispositivoLocale, rinominaDispositivo } from '../capta/dispositivo'
+import { spiegaErrore } from './SchermataAccesso'
 import { useToast } from '../componenti/Toast'
 import { useConferma } from '../componenti/Modale'
 import { useT, LINGUE_INTERFACCIA } from '../i18n'
@@ -37,6 +41,28 @@ export function SchermataImpostazioni() {
   const [verifica, setVerifica] = useState(false)
   const conteggi = useLiveQuery(async () => ({ eventi: await db.eventi.count(), lead: await db.lead.count(), foto: await db.foto.count() }), [])
   const [spazio, setSpazio] = useState<{ usato: number; totale: number } | null>(null)
+  const [avanzatoAperto, setAvanzatoAperto] = useState(false)
+  const [nomeDispositivo, setNomeDispositivo] = useState('')
+  const account = collegamento?.tipo === 'capta' ? collegamento.account : undefined
+  useEffect(() => {
+    void dispositivoLocale().then((d) => setNomeDispositivo(d.nome))
+  }, [])
+
+  async function esci() {
+    const ok = await conferma({ titolo: t('account.esci'), testo: t('account.esci_conferma'), testoConferma: t('account.esci'), pericolo: true })
+    if (!ok) return
+    await motore.scollega()
+  }
+
+  async function reinviaVerifica() {
+    if (!collegamento) return
+    try {
+      await creaApiCapta(collegamento.url).inviaVerifica(await motore.tokenValido())
+      avvisa(t('account.verifica_reinviata'), 'verde')
+    } catch (e) {
+      avvisa(spiegaErrore(e, t), 'rosso')
+    }
+  }
 
   useEffect(() => {
     if (collegamento) setUrl(collegamento.url)
@@ -84,6 +110,78 @@ export function SchermataImpostazioni() {
   return (
     <Pagina titolo={t('impostazioni.titolo')} indietro="/">
       <div className="card">
+        <div className="card__titolo">
+          <h2>{t('account.titolo')}</h2>
+          {account && <Pillola tono={collegamento?.stato === 'ok' ? 'verde' : 'rosso'} punto>{collegamento?.stato === 'ok' ? t('impostazioni.collegato') : t('account.sessione_scaduta')}</Pillola>}
+        </div>
+        {account ? (
+          <div className="colonna">
+            <div className="riga" style={{ gap: 12 }}>
+              <IconaPersona dimensione={28} />
+              <div>
+                <div className="grassetto">{account.azienda.nome}</div>
+                <div className="mini">{t('account.collegato_come', { nome: account.utente.nome, ruolo: t(account.utente.ruolo === 'amministratore' ? 'account.ruolo_amministratore' : 'account.ruolo_operatore') })} · {account.utente.email}</div>
+              </div>
+            </div>
+            <div className="pillole">
+              <Pillola tono="blu">{t('account.piano', { piano: t(`account.piano_${account.azienda.piano.nome}` as 'account.piano_prova') })}</Pillola>
+              <Pillola tono={collegamento?.gestionale ? (collegamento.gestionale.stato === 'ok' ? 'verde' : 'rosso') : 'neutro'}>{collegamento?.gestionale ? t('account.gestionale', { tipo: brand.plexus.nome_piattaforma }) : t('account.nessun_gestionale')}</Pillola>
+              {collegamento?.gestionale && <Pillola tono={collegamento.posta_lead_pronta ? 'verde' : 'ambra'}>{collegamento.posta_lead_pronta ? t('impostazioni.posta_pronta') : t('impostazioni.posta_non_pronta')}</Pillola>}
+            </div>
+            {!account.utente.verificato && (
+              <div className="avviso avviso--ambra">
+                <span className="avviso__testo">{t('account.verifica_avviso')}</span>
+                <button type="button" className="pulsante pulsante--piccolo pulsante--neutro" onClick={() => void reinviaVerifica()}>
+                  {t('account.verifica_reinvia')}
+                </button>
+              </div>
+            )}
+            {collegamento?.stato !== 'ok' && (
+              <Link to="/accesso" className="pulsante">
+                {t('account.accedi')}
+              </Link>
+            )}
+            <Campo
+              etichetta={t('account.dispositivo_nome')}
+              aiuto={t('account.dispositivo_aiuto')}
+              value={nomeDispositivo}
+              onChange={(e) => setNomeDispositivo(e.target.value)}
+              onBlur={() => void rinominaDispositivo(nomeDispositivo)}
+            />
+            <div className="riga">
+              {account.utente.ruolo === 'amministratore' && (
+                <Link to="/amministrazione" className="pulsante pulsante--secondario">
+                  {t('account.amministrazione')}
+                </Link>
+              )}
+              <button type="button" className="pulsante pulsante--pericolo pulsante--piccolo" onClick={() => void esci()}>
+                {t('account.esci')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="colonna">
+            <p className="secondario">{t('account.senza_account_aiuto')}</p>
+            <div className="riga">
+              <Link to="/accesso" className="pulsante">
+                {t('account.accedi')}
+              </Link>
+              <Link to="/accesso?modo=registrazione" className="pulsante pulsante--secondario">
+                {t('account.crea')}
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {(!collegamento || collegamento.tipo !== 'capta') && (
+        <div className="card">
+          <button type="button" className="pulsante pulsante--testo pulsante--piccolo" onClick={() => setAvanzatoAperto(!avanzatoAperto)} aria-expanded={avanzatoAperto} style={{ marginLeft: -8 }}>
+            {avanzatoAperto ? <IconaSu dimensione={16} /> : <IconaGiu dimensione={16} />} {t('account.plexus_diretto')}
+          </button>
+          {(avanzatoAperto || collegamento) && (
+            <div className="spazio-sopra">
+              <p className="mini" style={{ marginBottom: 12 }}>{t('account.plexus_diretto_aiuto')}</p>
         <div className="card__titolo">
           <h2>{t('impostazioni.plexus_titolo')}</h2>
           {collegamento && <Pillola tono={collegato ? 'verde' : 'rosso'} punto>{collegato ? t('impostazioni.collegato') : t('impostazioni.ricollega_titolo')}</Pillola>}
@@ -138,7 +236,10 @@ export function SchermataImpostazioni() {
             </div>
           </form>
         )}
-      </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="card">
         <div className="card__titolo">

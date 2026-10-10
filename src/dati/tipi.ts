@@ -80,6 +80,8 @@ export interface Lead {
   lingua: Lingua
   consenso: boolean | null
   risposte: Record<string, Risposta>
+  /** Chi ha registrato il contatto (dall'account Capta Cloud); null se non si sa. */
+  registrata_da?: { id: number; nome: string } | null
   origine: Origine
   /** true = arrivata da Plexus senza uuid: si può solo guardare, si modifica da Plexus. */
   solo_lettura: boolean
@@ -138,10 +140,36 @@ export interface Impostazione {
 
 export type StatoCollegamento = 'ok' | 'token_non_valido' | 'permesso_negato'
 
-/** Dati del collegamento a Plexus, salvati solo sul dispositivo. */
+/** A cosa è collegata l'app: a Capta Cloud (con un account) oppure direttamente a Plexus (modalità compatibile). */
+export type TipoCollegamento = 'capta' | 'plexus'
+
+export interface PianoAccount {
+  nome: string
+  scadenza: string | null
+  crediti_eventi: number
+  limiti: Record<string, number | null>
+  utilizzo: Record<string, number>
+}
+
+/** Chi sono e di quale azienda faccio parte, come risponde Capta Cloud a GET /me. */
+export interface InfoAccount {
+  utente: { id: number; email: string; nome: string; ruolo: string; lingua: string; verificato: boolean }
+  azienda: { id: number; nome: string; slug: string; lingua: string; piano: PianoAccount; configurazione: Record<string, unknown> }
+}
+
+/** Dati del collegamento (Capta Cloud o Plexus diretto), salvati solo sul dispositivo. */
 export interface CollegamentoPlexus {
+  /** assente nei dati vecchi = 'plexus' */
+  tipo?: TipoCollegamento
   url: string
+  /** token di accesso (JWT di Capta Cloud) oppure codice plx_ di Plexus */
   token: string
+  /** solo Capta Cloud: serve a ottenere un nuovo token di accesso quando scade */
+  token_rinnovo?: string
+  token_scade_il?: string
+  account?: InfoAccount
+  /** solo Capta Cloud: il gestionale collegato all'azienda (es. Plexus) e il suo stato */
+  gestionale?: { tipo: string; stato: string } | null
   piattaforma: string
   azienda: string
   utente: { nome: string; email: string; ruolo: string }

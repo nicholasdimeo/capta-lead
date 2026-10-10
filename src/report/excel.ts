@@ -21,7 +21,7 @@ export async function generaExcel(c: ContenutoReport, t: FunzioneT): Promise<Blo
   const intestazioni = [
     t('report.col_nome'), t('report.col_cognome'), t('report.col_email'), t('report.col_telefono'), t('report.col_azienda'),
     t('report.col_professione'), t('report.col_citta'), t('report.col_provincia'), t('report.col_indirizzo'), t('report.col_lingua'),
-    t('report.col_consenso'), t('report.col_categoria'),
+    t('report.col_consenso'), t('report.col_categoria'), t('report.col_registrata_da'),
     ...domande.map((d) => d.domanda),
     t('report.col_note'), t('report.col_registrata'), t('report.col_foto'), t('report.col_plexus'),
   ]
@@ -35,12 +35,12 @@ export async function generaExcel(c: ContenutoReport, t: FunzioneT): Promise<Blo
   for (const l of c.lead) {
     foglio.addRow([
       l.nome, l.cognome, l.email, l.telefono, l.azienda, l.professione, l.citta, l.provincia, l.indirizzo, l.lingua,
-      testoConsenso(l.consenso, t), l.categoria,
+      testoConsenso(l.consenso, t), l.categoria, l.registrata_da?.nome ?? '',
       ...domande.map((d) => testoRisposta(l.risposte[d.domanda])),
       l.note, formattaDataOra(l.creato_il, c.lingua), c.fotoPerLead.get(l.uuid)?.length ?? 0, l.plexus_id !== null ? t('report.si') : t('report.no'),
     ])
   }
-  const larghezze = [14, 16, 28, 16, 24, 18, 16, 10, 24, 8, 10, 14, ...domande.map(() => 24), 32, 18, 6, 10]
+  const larghezze = [14, 16, 28, 16, 24, 18, 16, 10, 24, 8, 10, 14, 16, ...domande.map(() => 24), 32, 18, 6, 10]
   foglio.columns.forEach((col, i) => {
     col.width = larghezze[i] ?? 16
   })
@@ -83,6 +83,12 @@ export async function generaExcel(c: ContenutoReport, t: FunzioneT): Promise<Blo
   intestazioneTabella(t('report.col_categoria'), t('report.numero'), t('report.percentuale'))
   for (const voce of riepilogo.perCategoria) {
     r.addRow([voce.categoria || t('report.senza_categoria'), voce.n, `${percentuale(voce.n, riepilogo.totale)}%`])
+  }
+  if (riepilogo.perOperatore.length > 0) {
+    r.addRow([])
+    titolo(t('report.per_operatore'))
+    intestazioneTabella(t('report.col_registrata_da'), t('report.numero'), t('report.percentuale'))
+    for (const voce of riepilogo.perOperatore) r.addRow([voce.operatore, voce.n, `${percentuale(voce.n, riepilogo.totale)}%`])
   }
   r.addRow([])
   titolo(t('report.risposte_domanda'))

@@ -48,6 +48,10 @@ export interface ClientPlexus {
 export interface OpzioniClient {
   fetchImpl?: typeof fetch
   timeoutMs?: number
+  /** Se presente, il token viene chiesto a ogni chiamata (Capta Cloud: può cambiare quando viene rinnovato). */
+  token?: () => Promise<string>
+  /** Se presente, dopo un 401 viene chiamata per ottenere un token nuovo; se restituisce null l'errore 401 resta. */
+  rinnova?: () => Promise<string | null>
 }
 
 /** "https://plexus.azienda.it/" → "https://plexus.azienda.it/api/v1" */
@@ -82,13 +86,13 @@ export function creaClientPlexus(urlBase: string, token: string, opzioni: Opzion
   const fetchImpl = opzioni.fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args))
   const timeoutMs = opzioni.timeoutMs ?? 30_000
 
-  async function richiesta(metodo: string, percorso: string, corpo: BodyInit | undefined, intestazioni: Record<string, string>, attesaMs: number, accetta: string): Promise<Response> {
+  async function richiestaGrezza(metodo: string, percorso: string, corpo: BodyInit | undefined, intestazioni: Record<string, string>, attesaMs: number, accetta: string, tokenAttuale: string): Promise<Response> {
     const controllo = new AbortController()
     const timer = setTimeout(() => controllo.abort(), attesaMs)
     try {
       return await fetchImpl(`${base}${percorso}`, {
         method: metodo,
-        headers: { Authorization: `Bearer ${token}`, Accept: accetta, ...intestazioni },
+        headers: { Authorization: `Bearer ${tokenAttuale}`, Accept: accetta, ...intestazioni },
         body: corpo,
         signal: controllo.signal,
         cache: 'no-store',
@@ -100,6 +104,23 @@ export function creaClientPlexus(urlBase: string, token: string, opzioni: Opzion
     } finally {
       clearTimeout(timer)
     }
+  }
+
+  /** Come richiestaGrezza, ma con il token dinamico e un solo nuovo tentativo dopo un 401 se c'è un rinnovo. */
+  async function richiesta(metodo: string, percorso: string, corpo: BodyInit | undefined, intestazioni: Record<string, string>, attesaMs: number, accetta: string): Promise<Response> {
+    const tokenAttuale = opzioni.token ? await opzioni.token() : token
+    const risposta = await richiestaGrezza(metodo, percorso, corpo, intestazioni, attesaMs, accetta, tokenAttuale)
+    if (risposta.status !== 401 || !opzioni.rinnova || corpo instanceof FormData) {
+      if (risposta.status === 401 && opzioni.rinnova && corpo instanceof FormData) {
+        // il multipart non si può rimandare così com'è: si rinnova il token e si lascia riprovare alla coda
+        const nuovo = await opzioni.rinnova()
+        if (nuovo) return richiestaGrezza(metodo, percorso, corpo, intestazioni, attesaMs, accetta, nuovo)
+      }
+      return risposta
+    }
+    const nuovo = await opzioni.rinnova()
+    if (!nuovo) return risposta
+    return richiestaGrezza(metodo, percorso, corpo, intestazioni, attesaMs, accetta, nuovo)
   }
 
   async function chiama<T>(metodo: string, percorso: string, corpo?: BodyInit, intestazioni: Record<string, string> = {}, attesaMs = timeoutMs): Promise<T> {

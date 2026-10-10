@@ -15,6 +15,13 @@ const DIZIONARI: Record<string, Partial<Record<ChiaveTesto, string>>> = { it, en
 /** Lingue per cui esiste una traduzione dell'interfaccia. */
 export const LINGUE_INTERFACCIA = Object.keys(DIZIONARI)
 
+let nomePiattaforma: string | null = null
+
+/** Il nome usato nei testi al posto di {{piattaforma}}: Plexus di norma, Capta Cloud quando si lavora con un account. */
+export function impostaNomePiattaforma(nome: string | null): void {
+  nomePiattaforma = nome
+}
+
 function sostituisci(testo: string, parametri?: Parametri): string {
   if (!parametri) return testo
   return testo.replace(/\{\{(\w+)\}\}/g, (_, nome: string) => (parametri[nome] !== undefined ? String(parametri[nome]) : `{{${nome}}}`))
@@ -23,7 +30,7 @@ function sostituisci(testo: string, parametri?: Parametri): string {
 /** Traduce una chiave nella lingua data (riserva: lingua principale del brand, poi italiano, poi la chiave stessa). */
 export function traduci(lingua: Lingua, chiave: ChiaveTesto, parametri?: Parametri): string {
   const voce = DIZIONARI[lingua]?.[chiave] ?? DIZIONARI[brand.lingue.principale]?.[chiave] ?? it[chiave] ?? chiave
-  return sostituisci(voce, { piattaforma: brand.plexus.nome_piattaforma, app: brand.app.nome, ...parametri })
+  return sostituisci(voce, { piattaforma: nomePiattaforma ?? brand.plexus.nome_piattaforma, app: brand.app.nome, cloud: brand.cloud.nome, ...parametri })
 }
 
 /** Sceglie tra forma singolare e plurale: chiave base + "_uno" / "_molti" (o i suffissi indicati). */

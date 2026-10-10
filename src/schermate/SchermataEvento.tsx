@@ -69,6 +69,11 @@ export function SchermataEvento() {
     return [...presenti]
   }, [evento, lead])
   const filtrate = useMemo(() => filtraLead(lead ?? [], filtri, normalizzaPerRicerca), [lead, filtri])
+  const operatori = useMemo(() => {
+    const mappa = new Map<number, string>()
+    for (const l of lead ?? []) if (l.registrata_da) mappa.set(l.registrata_da.id, l.registrata_da.nome)
+    return [...mappa.entries()]
+  }, [lead])
   const conConsenso = (lead ?? []).filter((l) => l.consenso === true).length
   const daInviare = (lead ?? []).filter((l) => ['in_coda', 'errore', 'rifiutata', 'modifiche_in_coda', 'in_invio'].includes(statoInvioLead(l, operazioni, collegato).stato)).length
 
@@ -181,6 +186,16 @@ export function SchermataEvento() {
               <option value="no">{t('dettaglio.consenso_no')}</option>
               <option value="nessuno">{t('dettaglio.consenso_nessuno')}</option>
             </select>
+            {operatori.length > 1 && (
+              <select className="campo__select campo__select--piccolo" value={filtri.operatore ?? ''} onChange={(e) => setFiltri({ ...filtri, operatore: e.target.value ? Number(e.target.value) : undefined })} aria-label={t('dettaglio.filtro_operatore')}>
+                <option value="">{t('dettaglio.filtro_operatore')}: {t('comune.tutti')}</option>
+                {operatori.map(([id, nome]) => (
+                  <option key={id} value={id}>
+                    {nome}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
       )}
@@ -224,7 +239,7 @@ export function SchermataEvento() {
             <div className="elenco">
               {filtrate.map((l) => {
                 const fotoLead = foto?.get(l.uuid) ?? []
-                const sotto = [l.azienda || l.professione, l.citta, l.email || l.telefono].filter(Boolean).join(' · ')
+                const sotto = [l.azienda || l.professione, l.citta, l.email || l.telefono, l.registrata_da && operatori.length > 1 ? t('lead.registrata_da', { nome: l.registrata_da.nome }) : ''].filter(Boolean).join(' · ')
                 return (
                   <Link key={l.uuid} to={`/contatti/${l.uuid}`} className="voce-lead">
                     <Avatar lead={l} foto={fotoLead.find((f) => f.tipo === 'volto') ?? fotoLead[0]} />

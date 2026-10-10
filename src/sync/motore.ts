@@ -19,6 +19,8 @@ import { allineaEventi, allineaFoto, allineaLead } from './allineamento'
 import { ascoltaCoda, segnalaCodaCambiata } from './segnali'
 import { adesso } from '../utils/date'
 import { nomeFileFoto } from '../utils/immagini'
+import { creaApiCapta, ErroreCapta, type DispositivoIn, type RispostaAccesso } from '../capta/api'
+import { dispositivoLocale } from '../capta/dispositivo'
 
 export const CHIAVE_COLLEGAMENTO = 'plexus'
 export const CHIAVE_ULTIMA_SYNC = 'ultima_sincronizzazione'
@@ -41,7 +43,8 @@ export interface StatoMotore {
 }
 
 export interface OpzioniMotore {
-  creaClient?: (url: string, token: string) => ClientPlexus
+  /** Costruisce il client di sincronizzazione per il collegamento corrente (Capta Cloud o Plexus diretto). */
+  creaClient?: (collegamento: CollegamentoPlexus, motore: MotoreSincronizzazione) => ClientPlexus
   online?: () => boolean
   attesaPerTentativo?: (tentativi: number, permanente: boolean) => number
   /** ogni quanti ms allineare di nuovo le lead di uno stesso evento (0 = sempre) */
@@ -60,7 +63,8 @@ type Ascoltatore = (stato: StatoMotore) => void
 export class MotoreSincronizzazione {
   private stato: StatoMotore = { inCorso: false, ultimaSync: null, ultimoEsito: null, collegamento: null }
   private ascoltatori = new Set<Ascoltatore>()
-  private readonly creaClient: (url: string, token: string) => ClientPlexus
+  private readonly creaClient: (collegamento: CollegamentoPlexus, motore: MotoreSincronizzazione) => ClientPlexus
+  private rinnovoInCorso: Promise<string | null> | null = null
   private readonly online: () => boolean
   private readonly attesa: (tentativi: number, permanente: boolean) => number
   private readonly intervalloAllineamentoLead: number
@@ -80,7 +84,10 @@ export class MotoreSincronizzazione {
     private readonly archivio: ArchivioLocale,
     opzioni: OpzioniMotore = {},
   ) {
-    this.creaClient = opzioni.creaClient ?? ((url, token) => creaClientPlexus(url, token))
+    this.creaClient =
+      opzioni.creaClient ??
+      ((c, m) =>
+        creaClientPlexus(c.url, c.token, c.tipo === 'capta' ? { token: () => m.tokenValido(), rinnova: () => m.rinnovaToken() } : {}))
     this.online = opzioni.online ?? (() => (typeof navigator === 'undefined' ? true : navigator.onLine !== false))
     this.attesa = opzioni.attesaPerTentativo ?? attesaPredefinita
     this.intervalloAllineamentoLead = opzioni.intervalloAllineamentoLead ?? 90_000
@@ -147,9 +154,11 @@ export class MotoreSincronizzazione {
   // ---------- collegamento ----------
   /** Verifica indirizzo e codice con GET /stato e, se va bene, salva il collegamento sul dispositivo. */
   async collega(url: string, token: string): Promise<StatoPlexus> {
-    const client = this.creaClient(url, token)
+    const provvisorio: CollegamentoPlexus = { tipo: 'plexus', url: url.trim(), token: token.trim(), piattaforma: '', azienda: '', utente: { nome: '', email: '', ruolo: '' }, posta_lead_pronta: false, ai_pronta: false, lingue: {}, linee: {}, tipi_foto: [], api: '1.0', collegato_il: adesso(), stato: 'ok' }
+    const client = this.creaClient(provvisorio, this)
     const stato = await client.stato()
     const collegamento: CollegamentoPlexus = {
+      tipo: 'plexus',
       url: url.trim(),
       token: token.trim(),
       piattaforma: stato.piattaforma ?? 'Plexus',
@@ -174,8 +183,119 @@ export class MotoreSincronizzazione {
 
   /** Toglie il collegamento dal dispositivo. La coda resta: ripartirà al prossimo collegamento. */
   async scollega(): Promise<void> {
+    const c = this.stato.collegamento
+    if (c?.tipo === 'capta' && c.token_rinnovo) {
+      // chiude la sessione sul server; se non c'è rete pazienza, il token di rinnovo scade da solo
+      await creaApiCapta(c.url).esci(c.token_rinnovo).catch(() => undefined)
+    }
     await cancellaImpostazione(CHIAVE_COLLEGAMENTO, this.archivio)
     this.aggiorna({ collegamento: null })
+  }
+
+  // ---------- account Capta Cloud ----------
+
+  /** Entra con email e password in Capta Cloud e salva il collegamento sul dispositivo. */
+  async accedi(url: string, email: string, password: string): Promise<CollegamentoPlexus> {
+    const dispositivo = await this.dispositivo()
+    return this.salvaAccount(url, await creaApiCapta(url).accedi({ email, password, dispositivo }))
+  }
+
+  /** Crea una nuova azienda e il suo primo amministratore. */
+  async registra(url: string, dati: { azienda_nome: string; nome: string; email: string; password: string; lingua: string }): Promise<CollegamentoPlexus> {
+    const dispositivo = await this.dispositivo()
+    return this.salvaAccount(url, await creaApiCapta(url).registra({ ...dati, dispositivo }))
+  }
+
+  /** Accetta un invito ricevuto per email ed entra. */
+  async accettaInvito(url: string, codice: string, dati: { nome: string; password: string; lingua: string }): Promise<CollegamentoPlexus> {
+    const dispositivo = await this.dispositivo()
+    return this.salvaAccount(url, await creaApiCapta(url).accettaInvito(codice, { ...dati, dispositivo }))
+  }
+
+  /** Rilegge /me (dopo modifiche fatte dall'amministrazione) e aggiorna il collegamento salvato. */
+  async aggiornaAccount(): Promise<void> {
+    const c = this.stato.collegamento
+    if (!c || c.tipo !== 'capta') return
+    const me = await creaApiCapta(c.url).me(await this.tokenValido())
+    const integrazione = me.integrazioni.find((i) => i.tipo === 'plexus' && i.attiva)
+    const attuale = this.stato.collegamento ?? c
+    await this.salvaCollegamento({ ...attuale, azienda: me.azienda.nome, utente: { nome: me.utente.nome, email: me.utente.email, ruolo: me.utente.ruolo }, account: { utente: me.utente, azienda: me.azienda }, posta_lead_pronta: Boolean(integrazione?.dettagli?.posta_lead_pronta), gestionale: me.utente.ruolo === 'amministratore' ? (integrazione ? { tipo: integrazione.tipo, stato: integrazione.stato } : null) : (attuale.gestionale ?? null) })
+  }
+
+  /** Token di accesso valido: se sta per scadere lo rinnova prima. */
+  async tokenValido(): Promise<string> {
+    const c = this.stato.collegamento
+    if (!c) throw new ErrorePlexus('http', 401, 'non collegato')
+    if (c.tipo !== 'capta') return c.token
+    if (c.token_scade_il && new Date(c.token_scade_il).getTime() - Date.now() < 60_000) {
+      const nuovo = await this.rinnovaToken()
+      if (nuovo) return nuovo
+    }
+    return c.token
+  }
+
+  /** Chiede un nuovo token di accesso con il token di rinnovo. null se la sessione non è più valida. */
+  rinnovaToken(): Promise<string | null> {
+    if (this.rinnovoInCorso) return this.rinnovoInCorso
+    this.rinnovoInCorso = (async () => {
+      const c = this.stato.collegamento
+      if (!c || c.tipo !== 'capta' || !c.token_rinnovo) return null
+      try {
+        const t = await creaApiCapta(c.url).rinnova(c.token_rinnovo)
+        await this.salvaCollegamento({ ...c, token: t.token_accesso, token_rinnovo: t.token_rinnovo, token_scade_il: new Date(Date.now() + t.scade_in_secondi * 1000).toISOString(), stato: 'ok' })
+        return t.token_accesso
+      } catch (e) {
+        if (e instanceof ErroreCapta && e.codice === 401) {
+          await this.segnaCollegamento('token_non_valido')
+          return null
+        }
+        // rete assente: non è una sessione scaduta, il ciclo si ferma come per la rete
+        throw new ErrorePlexus('rete', null, 'rete non raggiungibile')
+      }
+    })().finally(() => {
+      this.rinnovoInCorso = null
+    })
+    return this.rinnovoInCorso
+  }
+
+  private async dispositivo(): Promise<DispositivoIn> {
+    const d = await dispositivoLocale(this.archivio)
+    return { identificativo: d.identificativo, nome: d.nome }
+  }
+
+  private async salvaAccount(url: string, risposta: RispostaAccesso): Promise<CollegamentoPlexus> {
+    const conf = (risposta.me.azienda.configurazione ?? {}) as { lingue?: { disponibili?: Record<string, string> }; linee?: Record<string, unknown> }
+    const integrazione = risposta.me.integrazioni.find((i) => i.tipo === 'plexus' && i.attiva)
+    const collegamento: CollegamentoPlexus = {
+      tipo: 'capta',
+      url: url.trim(),
+      token: risposta.token.token_accesso,
+      token_rinnovo: risposta.token.token_rinnovo,
+      token_scade_il: new Date(Date.now() + risposta.token.scade_in_secondi * 1000).toISOString(),
+      account: { utente: risposta.me.utente, azienda: risposta.me.azienda },
+      piattaforma: 'Capta Cloud',
+      azienda: risposta.me.azienda.nome,
+      utente: { nome: risposta.me.utente.nome, email: risposta.me.utente.email, ruolo: risposta.me.utente.ruolo },
+      posta_lead_pronta: Boolean(integrazione?.dettagli?.posta_lead_pronta),
+      ai_pronta: false,
+      lingue: conf.lingue?.disponibili ?? {},
+      linee: Object.fromEntries(Object.entries(conf.linee ?? {}).map(([k, v]) => [k, typeof v === 'string' ? v : k])),
+      tipi_foto: ['biglietto', 'volto', 'altro'],
+      gestionale: integrazione ? { tipo: integrazione.tipo, stato: integrazione.stato } : null,
+      api: '1.1',
+      collegato_il: adesso(),
+      stato: 'ok',
+    }
+    await this.salvaCollegamento(collegamento)
+    this.ultimoAllineamentoLead.clear()
+    this.ultimaLetturaStato = Date.now()
+    void this.sincronizza('collegamento')
+    return collegamento
+  }
+
+  private async salvaCollegamento(c: CollegamentoPlexus): Promise<void> {
+    await salvaImpostazione(CHIAVE_COLLEGAMENTO, c, this.archivio)
+    this.aggiorna({ collegamento: c })
   }
 
   /** true se il Plexus collegato ha l'API 1.1 (PUT eventi, foto con uuid, elenco foto, archiviazione). */
@@ -266,7 +386,7 @@ export class MotoreSincronizzazione {
   }
 
   private async ciclo(c: CollegamentoPlexus, forzaLead: boolean): Promise<EsitoSync> {
-    const client = this.creaClient(c.url, c.token)
+    const client = this.creaClient(c, this)
     const esito: EsitoSync = { eseguita: true, inviate: 0, fallite: 0 }
 
     // 0. ogni tanto rilegge GET /stato: la versione dell'API e la casella di posta possono cambiare lato Plexus
@@ -284,12 +404,14 @@ export class MotoreSincronizzazione {
           lingue: stato.lingue ?? c.lingue,
           linee: stato.linee ?? c.linee,
           tipi_foto: stato.tipi_foto ?? c.tipi_foto,
+          gestionale: stato.gestionale === undefined ? c.gestionale : stato.gestionale,
           stato: 'ok',
         }
         if (JSON.stringify(aggiornato) !== JSON.stringify(c)) {
           await salvaImpostazione(CHIAVE_COLLEGAMENTO, aggiornato, this.archivio)
           this.aggiorna({ collegamento: aggiornato })
         }
+        if (c.tipo === 'capta') await this.aggiornaAccount().catch(() => undefined)
       } catch (e) {
         const fermati = await this.gestisciErroreGlobale(e)
         if (fermati) return { ...esito, errore: fermati }

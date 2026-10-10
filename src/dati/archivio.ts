@@ -167,13 +167,14 @@ export interface NuovaFoto {
   dati: DatiFoto
 }
 
-export async function creaLead(evento_uuid: string, campi: Partial<CampiLead>, archivio: ArchivioLocale = dbPredefinito, fotoNuove: NuovaFoto[] = []): Promise<Lead> {
+export async function creaLead(evento_uuid: string, campi: Partial<CampiLead>, archivio: ArchivioLocale = dbPredefinito, fotoNuove: NuovaFoto[] = [], registrataDa: { id: number; nome: string } | null = null): Promise<Lead> {
   const ora = adesso()
   const lead: Lead = {
     uuid: nuovoUuid(),
     evento_uuid,
     ...CAMPI_LEAD_VUOTI,
     ...pulisciCampiLead(campi),
+    registrata_da: registrataDa,
     origine: 'app',
     solo_lettura: false,
     plexus_id: null,
@@ -296,6 +297,8 @@ export interface FiltriLead {
   testo?: string
   categoria?: string
   consenso?: 'si' | 'no' | 'nessuno'
+  /** id dell'utente che ha registrato il contatto */
+  operatore?: number
 }
 
 /** Filtra un elenco di lead (già caricato) per testo libero, categoria e consenso. */
@@ -306,6 +309,7 @@ export function filtraLead(lead: Lead[], filtri: FiltriLead, normalizza: (t: str
     if (filtri.consenso === 'si' && l.consenso !== true) return false
     if (filtri.consenso === 'no' && l.consenso !== false) return false
     if (filtri.consenso === 'nessuno' && l.consenso !== null) return false
+    if (filtri.operatore !== undefined && l.registrata_da?.id !== filtri.operatore) return false
     if (testo) {
       const pagliaio = normalizza([l.nome, l.cognome, l.email, l.telefono, l.azienda, l.professione, l.citta, l.provincia, l.note, l.categoria].join(' '))
       if (!testo.split(' ').every((parola) => pagliaio.includes(parola))) return false

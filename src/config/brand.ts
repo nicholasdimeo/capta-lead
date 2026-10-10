@@ -43,6 +43,8 @@ export interface Brand {
   privacy: { titolo: TestoMultilingua; testo: TestoMultilingua }
   questionario_predefinito: Domanda[]
   plexus: { nome_piattaforma: string; url_predefinito: string }
+  /** Il server degli account (Capta Cloud). L'indirizzo si può anche impostare al momento della build con VITE_CAPTA_CLOUD_URL. */
+  cloud: { nome: string; url_predefinito: string }
 }
 
 const TEMA_RISERVA: Tema = {
@@ -127,6 +129,7 @@ export function validaBrand(grezzo: unknown, logo: string): Brand {
 
   const privacy = oggetto(g.privacy)
   const plexus = oggetto(g.plexus)
+  const cloud = oggetto(g.cloud)
   const nomeApp = stringa(app.nome, 'Capta Lead')
   return {
     app: { nome: nomeApp, nome_breve: stringa(app.nome_breve, nomeApp), descrizione: stringa(app.descrizione) },
@@ -142,11 +145,55 @@ export function validaBrand(grezzo: unknown, logo: string): Brand {
     privacy: { titolo: multilingua(privacy.titolo, 'Privacy'), testo: multilingua(privacy.testo, '') },
     questionario_predefinito: normalizzaQuestionario(g.questionario_predefinito),
     plexus: { nome_piattaforma: stringa(plexus.nome_piattaforma, 'Plexus'), url_predefinito: stringa(plexus.url_predefinito) },
+    cloud: { nome: stringa(cloud.nome, 'Capta Cloud'), url_predefinito: stringa(cloud.url_predefinito) },
   }
 }
 
-/** La configurazione dell'azienda, pronta all'uso. */
+/** La configurazione dell'azienda, pronta all'uso. Viene aggiornata da applicaConfigurazione() dopo l'accesso a Capta Cloud. */
 export const brand: Brand = validaBrand(brandGrezzo, logoUrl)
+/** Copia della configurazione di partenza (dal file), per tornare indietro dopo l'uscita dall'account. */
+const brandDiPartenza: Brand = JSON.parse(JSON.stringify(brand))
+const urlCloudDaBuild = typeof import.meta.env.VITE_CAPTA_CLOUD_URL === 'string' ? import.meta.env.VITE_CAPTA_CLOUD_URL : ''
+if (urlCloudDaBuild) brand.cloud.url_predefinito = urlCloudDaBuild
+if (urlCloudDaBuild) brandDiPartenza.cloud.url_predefinito = urlCloudDaBuild
+
+let versioneBrand = 0
+const ascoltatoriBrand = new Set<() => void>()
+
+/** Numero che cambia a ogni modifica della configurazione: serve a far ridisegnare l'interfaccia. */
+export function versioneDelBrand(): number {
+  return versioneBrand
+}
+export function ascoltaBrand(a: () => void): () => void {
+  ascoltatoriBrand.add(a)
+  return () => ascoltatoriBrand.delete(a)
+}
+
+/**
+ * Sovrappone alla configurazione del file quella dell'azienda ricevuta da Capta Cloud (nome, colori, testi,
+ * categorie, questionario). Con null torna alla configurazione del file. Il logo resta quello del file.
+ */
+export function applicaConfigurazione(configurazione: Record<string, unknown> | null | undefined, aziendaNome?: string): void {
+  const base = JSON.parse(JSON.stringify(brandDiPartenza)) as Brand
+  const grezzoBase: Record<string, unknown> = { ...(brandGrezzo as Record<string, unknown>), cloud: { nome: base.cloud.nome, url_predefinito: base.cloud.url_predefinito } }
+  const unito = validaBrand({ ...grezzoBase, ...(configurazione && typeof configurazione === 'object' ? configurazione : {}) }, logoUrl)
+  // "app", "azienda" e "tema" si fondono campo per campo, così un'azienda può cambiare solo il nome o solo un colore
+  const conf = (configurazione ?? {}) as Record<string, Record<string, unknown> | undefined>
+  unito.app = { ...base.app, ...filtraStringhe(conf.app) } as Brand['app']
+  unito.azienda = { ...base.azienda, ...(aziendaNome ? { nome: aziendaNome } : {}), ...filtraStringhe(conf.azienda) } as Brand['azienda']
+  unito.tema = { ...base.tema, ...filtraStringhe(conf.tema) } as Brand['tema']
+  unito.cloud = base.cloud
+  Object.assign(brand, unito)
+  applicaTema(brand.tema)
+  versioneBrand++
+  for (const a of ascoltatoriBrand) a()
+}
+
+function filtraStringhe(valore: Record<string, unknown> | undefined): Record<string, string> {
+  const esito: Record<string, string> = {}
+  for (const [k, v] of Object.entries(valore ?? {})) if (typeof v === 'string' && v.trim()) esito[k] = v.trim()
+  return esito
+}
 
 /** Prende il testo nella lingua richiesta, altrimenti nella principale, altrimenti il primo disponibile. */
 export function testoIn(valore: TestoMultilingua | undefined, lingua: Lingua, principale: Lingua = brand.lingue.principale): string {

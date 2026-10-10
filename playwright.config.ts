@@ -28,6 +28,22 @@ export default defineConfig({
       env: { FINTO_PLEXUS_PORTA: '8787', FINTO_PLEXUS_SILENZIOSO: '1' },
     },
     {
+      // Capta Cloud vero (Python), con un database temporaneo e le email stampate a console
+      command: `cd cloud && ${process.env.HOME}/.local/bin/uv run uvicorn capta_cloud.principale:app --port 8011`,
+      port: 8011,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: {
+        CAPTA_AMBIENTE: 'test',
+        CAPTA_DATABASE_URL: 'sqlite:////tmp/capta-e2e.db',
+        CAPTA_CARTELLA_FOTO: '/tmp/capta-e2e-foto',
+        CAPTA_CHIAVE_SEGRETA: 'chiave-e2e',
+        CAPTA_POSTA: 'console',
+        CAPTA_INTEGRAZIONI_ATTIVE: 'false',
+        CAPTA_URL_APP: 'http://localhost:4173',
+      },
+    },
+    {
       command: 'npm run preview',
       port: 4173,
       reuseExistingServer: !process.env.CI,

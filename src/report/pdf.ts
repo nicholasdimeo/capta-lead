@@ -188,6 +188,14 @@ export async function generaPdf(c: ContenutoReport, t: FunzioneT): Promise<Blob>
     imp.rigaVuota(14)
   }
 
+  // ---------- operatori ----------
+  if (riepilogo.perOperatore.length > 1) {
+    imp.testo(t('report.per_operatore'), { font: grassetto, dimensione: 13, colore: NAVY })
+    imp.rigaVuota(4)
+    disegnaBarre(imp, riepilogo.perOperatore.map((v) => ({ etichetta: v.operatore, n: v.n })), riepilogo.totale)
+    imp.rigaVuota(14)
+  }
+
   // ---------- domande ----------
   if (riepilogo.perDomanda.length > 0) {
     imp.testo(t('report.risposte_domanda'), { font: grassetto, dimensione: 13, colore: NAVY })

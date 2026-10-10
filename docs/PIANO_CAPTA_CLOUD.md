@@ -66,7 +66,7 @@ Stessa forma del contratto Plexus 1.1 per eventi, lead e foto (così l'app cambi
 
 ## Fasi
 
-### Fase 1 — fondamenta (in corso)
+### Fase 1 — fondamenta (fatta il 10 ottobre 2026, da pubblicare)
 
 1. Progetto `cloud/`: FastAPI, SQLAlchemy, migrazioni, test automatici; esecuzione locale senza
    Docker (SQLite in sviluppo, PostgreSQL in produzione).
@@ -77,7 +77,13 @@ Stessa forma del contratto Plexus 1.1 per eventi, lead e foto (così l'app cambi
 5. App: schermata di accesso (con "continua senza account"), client Capta Cloud, sincronizzazione,
    marchio scaricato dal cloud, "registrata da" e filtri/report per operatore, area
    Amministrazione (utenti, inviti, integrazioni, piano, personalizzazione).
-6. Pubblicazione di Capta Cloud sul server, dominio, HTTPS, backup.
+6. Pubblicazione di Capta Cloud sul server, dominio, HTTPS, backup. **← prossimo passo** (servono le
+   informazioni sul server di Plexus, un dominio e un servizio per le email).
+
+Stato: punti 1-5 fatti e provati (13 test del server, 80 test dell'app, 8 prove nel browser di cui una
+contro il Capta Cloud vero). Rimandato a dopo la pubblicazione: editor completo del questionario
+predefinito nell'amministrazione (oggi si imposta per evento), limitazione dei tentativi di accesso,
+migrazioni Alembic (oggi le tabelle si creano all'avvio).
 
 ### Fase 2 — prodotto
 

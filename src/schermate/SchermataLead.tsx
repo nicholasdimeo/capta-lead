@@ -21,6 +21,7 @@ import { brand, testoIn } from '../config/brand'
 import { aggiornaLead, cancellaImpostazione, consensoDalleRisposte, creaLead, leggiEvento, leggiImpostazione, leggiLead, salvaImpostazione, CAMPI_LEAD_VUOTI, type CampiLead } from '../dati/archivio'
 import type { Risposta, TipoFoto } from '../dati/tipi'
 import { emailValida } from '../utils/testo'
+import { useMotore } from '../hooks/useMotore'
 
 type Passo = 1 | 2 | 3
 type FotoNuova = FotoScelta & { chiave: string }
@@ -39,6 +40,8 @@ export function SchermataLead() {
   const naviga = useNavigate()
   const avvisa = useToast()
   const conferma = useConferma()
+  const { collegamento } = useMotore()
+  const registrataDa = collegamento?.tipo === 'capta' && collegamento.account ? { id: collegamento.account.utente.id, nome: collegamento.account.utente.nome } : null
   // /eventi/:uuid/nuovo-contatto → uuid è l'evento; /contatti/:uuid/modifica → uuid è la lead
   const modifica = useMatch('/contatti/:uuid/modifica') !== null
   // undefined = sto caricando; null = non esiste
@@ -183,7 +186,7 @@ export function SchermataLead() {
     try {
       const dati = { ...campi, consenso: consensoDalleRisposte(questionario, campi.risposte) ?? campi.consenso }
       const fotoNuove = nuoveFoto.map((f) => ({ tipo: f.tipo, dati: f.immagine }))
-      const lead = modifica ? await aggiornaLead(uuid, dati, undefined, fotoNuove) : await creaLead(eventoUuid, dati, undefined, fotoNuove)
+      const lead = modifica ? await aggiornaLead(uuid, dati, undefined, fotoNuove) : await creaLead(eventoUuid, dati, undefined, fotoNuove, registrataDa)
       sporco.current = false
       if (!modifica) await cancellaImpostazione(chiaveBozza(eventoUuid)).catch(() => undefined)
       avvisa(modifica ? t('lead.aggiornato') : t('lead.salvato'), 'verde')

@@ -12,6 +12,8 @@ export interface StatoPlexus {
   lingue: Record<string, string>
   linee: Record<string, string>
   tipi_foto: string[]
+  /** (Capta Cloud) gestionale collegato all'azienda, se c'è */
+  gestionale?: { tipo: string; stato: string } | null
 }
 
 /** Domanda come la conosce Plexus (dalla 1.1 con le traduzioni). */
@@ -98,7 +100,11 @@ export interface LeadPlexus {
   aggiornato_il: string | null
   n_foto: number
   /** (1.1) esito della mail immediata, visibile da qualunque dispositivo */
-  ringraziamento?: { esito: 'inviato' | 'in_attesa' | 'errore' | null; inviato_il: string | null } | null
+  ringraziamento?: { esito: 'inviato' | 'in_attesa' | 'errore' | 'saltato' | null; inviato_il: string | null; dettaglio?: string } | null
+  /** (Capta Cloud) chi ha registrato il contatto */
+  registrata_da?: { id: number; nome: string } | null
+  /** (Capta Cloud) stato della lead nel gestionale collegato all'azienda */
+  gestionale?: { id: number | null; stato: string | null } | null
 }
 
 export interface CorpoLead {

@@ -8,7 +8,7 @@ import { IconaPiu, IconaCalendario } from '../componenti/Icone'
 import { useT } from '../i18n'
 import { brand, testoIn } from '../config/brand'
 import { contaLeadPerEvento, elencoEventi } from '../dati/archivio'
-import { useCollegato, useOperazioniAperte } from '../hooks/useMotore'
+import { useCollegato, useMotore, useOperazioniAperte } from '../hooks/useMotore'
 import { statoInvioEvento } from '../sync/motore'
 import { eventoInCorso, formattaIntervallo, oggiIso } from '../utils/date'
 
@@ -18,6 +18,7 @@ export function SchermataEventi() {
   const conteggi = useLiveQuery(() => contaLeadPerEvento(), [])
   const operazioni = useOperazioniAperte()
   const collegato = useCollegato()
+  const { collegamento } = useMotore()
   const oggi = oggiIso()
   const [mostraArchiviati, setMostraArchiviati] = useState(false)
   const archiviati = (eventi ?? []).filter((e) => e.archiviato)
@@ -36,6 +37,14 @@ export function SchermataEventi() {
         </div>
       </div>
 
+      {!collegamento && eventi !== undefined && (
+        <div className="avviso avviso--blu" style={{ marginBottom: 14 }}>
+          <span className="avviso__testo">{t('account.senza_account_aiuto')}</span>
+          <Link to="/accesso" className="pulsante pulsante--piccolo">
+            {t('account.accedi')}
+          </Link>
+        </div>
+      )}
       {eventi === undefined ? null : visibili.length === 0 && archiviati.length === 0 ? (
         <div className="card">
           <Vuoto

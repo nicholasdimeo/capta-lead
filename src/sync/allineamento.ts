@@ -225,6 +225,7 @@ export async function allineaLead(archivio: ArchivioLocale, evento: Evento, daPl
           lingua: remota.lingua || evento.lingua,
           consenso: remota.consenso === 'S' ? true : remota.consenso === 'N' ? false : null,
           risposte: risposteDaPlexus(remota.risposte ?? {}, evento.questionario),
+          registrata_da: remota.registrata_da ?? null,
           origine: 'plexus',
           solo_lettura: !remota.uuid,
           plexus_id: remota.id,
@@ -239,6 +240,7 @@ export async function allineaLead(archivio: ArchivioLocale, evento: Evento, daPl
         continue
       }
       const aggiornata: Lead = { ...locale, plexus_id: remota.id, plexus_stato: remota.stato ?? locale.plexus_stato }
+      if (remota.registrata_da) aggiornata.registrata_da = remota.registrata_da
       // (1.1) l'esito della mail di ringraziamento arriva da Plexus: vale per ogni dispositivo
       const rem = remota.ringraziamento
       if (rem && rem.esito) {
