@@ -20,7 +20,7 @@ export async function urlCloudIniziale(): Promise<string> {
   const salvato = await leggiImpostazione<string>(CHIAVE_URL_CLOUD, '')
   if (salvato) return salvato
   if (brand.cloud.url_predefinito) return brand.cloud.url_predefinito
-  return import.meta.env.DEV ? 'http://localhost:8000' : ''
+  return import.meta.env.DEV ? 'http://localhost:8100' : ''
 }
 
 /** Traduce un errore dell'API di Capta Cloud in una frase per l'utente. */

@@ -7,6 +7,6 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY capta_cloud ./capta_cloud
 RUN uv sync --frozen --no-dev
-ENV PATH="/app/.venv/bin:$PATH" CAPTA_AMBIENTE=produzione PORT=8000
-EXPOSE 8000
-CMD ["sh", "-c", "uvicorn capta_cloud.principale:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*'"]
+ENV PATH="/app/.venv/bin:$PATH" CAPTA_AMBIENTE=produzione PORT=8100
+EXPOSE 8100
+CMD ["sh", "-c", "uvicorn capta_cloud.principale:app --host 0.0.0.0 --port ${PORT:-8100} --proxy-headers --forwarded-allow-ips='*'"]

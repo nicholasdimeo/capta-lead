@@ -13,10 +13,12 @@ uv sync
 ```
 
 ```bash
-uv run uvicorn capta_cloud.principale:app --reload --port 8000
+uv run capta-cloud
 ```
 
-- API: `http://localhost:8000/api/v1` (documentazione interattiva su `/api/v1/documentazione`).
+- Porta fissa **8100** (la 8000 è di Plexus sullo stesso Mac); si cambia con `CAPTA_PORTA`.
+- API: `http://localhost:8100/api/v1` (documentazione interattiva su `/api/v1/documentazione`).
+- L'app in sviluppo (`npm run dev`) propone già `http://localhost:8100` come indirizzo di Capta Cloud.
 - In sviluppo non serve configurare nulla: database SQLite in `dati/capta.db`, foto in `dati/foto/`,
   email stampate nel terminale (il link di verifica o di invito si copia da lì).
 - Test: `uv run pytest`
@@ -25,6 +27,7 @@ uv run uvicorn capta_cloud.principale:app --reload --port 8000
 
 | Variabile | Significato | Predefinito |
 | --- | --- | --- |
+| `CAPTA_PORTA` | porta di `uv run capta-cloud` in locale | `8100` |
 | `CAPTA_AMBIENTE` | `sviluppo`, `produzione`, `test` | `sviluppo` |
 | `CAPTA_DATABASE_URL` | es. `postgresql+psycopg://utente:password@localhost/capta` | SQLite in `dati/` |
 | `CAPTA_CARTELLA_FOTO` | dove salvare le foto | `dati/foto` |
@@ -45,7 +48,7 @@ Per generare le chiavi: `uv run python -c "import secrets;print(secrets.token_ur
 ## Pubblicare
 
 C'è un `Dockerfile`: va bene per Railway, Fly.io, Render o un server con Docker. Il contenitore ascolta
-sulla porta `PORT` (8000 se non impostata). In produzione servono almeno: `CAPTA_CHIAVE_SEGRETA`,
+sulla porta `PORT` (8100 se non impostata). In produzione servono almeno: `CAPTA_CHIAVE_SEGRETA`,
 `CAPTA_CHIAVE_CIFRATURA`, `CAPTA_DATABASE_URL` (PostgreSQL), `CAPTA_URL_APP`, `CAPTA_ORIGINI`,
 `CAPTA_POSTA` con la sua chiave, e, con più istanze, `CAPTA_ARCHIVIO_FOTO=s3` con i dati del bucket.
 

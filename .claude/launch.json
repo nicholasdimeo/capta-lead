@@ -4,14 +4,35 @@
     {
       "name": "anteprima",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "preview"],
+      "runtimeArgs": [
+        "run",
+        "preview"
+      ],
       "port": 4173
     },
     {
       "name": "sviluppo",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "5173", "--strictPort"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5173",
+        "--strictPort"
+      ],
       "port": 5173
+    },
+    {
+      "name": "capta-cloud",
+      "runtimeExecutable": "/Users/nicholasdimeo/.local/bin/uv",
+      "runtimeArgs": [
+        "run",
+        "--directory",
+        "cloud",
+        "capta-cloud"
+      ],
+      "port": 8100
     }
   ]
 }

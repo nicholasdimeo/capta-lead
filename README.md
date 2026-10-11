@@ -50,7 +50,7 @@ npm run dev            # avvia l'app in sviluppo su http://localhost:5173
 npm run finto-plexus   # avvia il Plexus finto su http://localhost:8787 (in un'altra finestra)
 npm test               # test unitari (dati, coda, motore di sincronizzazione, report)
 npm run test:e2e       # prove nel browser vero, anche offline (fa da sé la build, avvia il finto Plexus e Capta Cloud)
-cd cloud && uv run uvicorn capta_cloud.principale:app --reload   # il server Capta Cloud in locale (porta 8000)
+cd cloud && uv run capta-cloud   # il server Capta Cloud in locale, porta fissa 8100 (la 8000 è di Plexus)
 npm run build          # crea la versione da mettere online nella cartella dist/
 npm run pacchetto      # impacchetta dist/ in capta-lead-<versione>.zip
 npm run icone          # rigenera le icone dell'app da config/logo.svg

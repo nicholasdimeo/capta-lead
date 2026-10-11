@@ -20,6 +20,9 @@ dependencies = [
   "boto3>=1.43.111",
 ]
 
+[project.scripts]
+capta-cloud = "capta_cloud.avvio:main"
+
 [dependency-groups]
 dev = [
   "pytest>=8",
