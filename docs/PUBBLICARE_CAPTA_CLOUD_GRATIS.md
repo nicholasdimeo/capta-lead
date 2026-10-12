@@ -43,11 +43,12 @@ clienti esterni si attiverà un servizio email (Brevo o Resend sono già previst
    `https://capta-cloud.onrender.com`. Aprendo `https://capta-cloud.onrender.com/api/v1/salute` deve
    comparire `{"ok":"sì",…}`.
 
-## 3. Vercel (dire all'app dov'è Capta Cloud)
+## 3. Dire all'app dov'è Capta Cloud
 
-1. Su vercel.com, progetto `capta-lead` → *Settings → Environment Variables*.
-2. Aggiungi `VITE_CAPTA_CLOUD_URL` con l'indirizzo di Render (es. `https://capta-cloud.onrender.com`).
-3. *Deployments* → sull'ultimo deploy, menu ⋯ → *Redeploy*.
+L'indirizzo del server sta in `config/brand.json`, alla voce `cloud.url_predefinito`
+(oggi `https://capta-cloud.onrender.com`). Se cambia, si modifica lì e si fa il push: Vercel ripubblica
+l'app da solo. In alternativa si può impostare la variabile `VITE_CAPTA_CLOUD_URL` nelle impostazioni del
+progetto su Vercel (ha la precedenza sul file).
 
 ## 4. Primo accesso
 

@@ -163,6 +163,6 @@
   },
   "cloud": {
     "nome": "Capta Cloud",
-    "url_predefinito": ""
+    "url_predefinito": "https://capta-cloud.onrender.com"
   }
 }
