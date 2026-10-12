@@ -4,3 +4,5 @@ finto-plexus
 test-results
 playwright-report
 *.zip
+cloud
+render.yaml
