@@ -55,7 +55,7 @@ export function SchermataAccesso() {
   const [linguaAccount, setLinguaAccount] = useState(lingua)
   const [errore, setErrore] = useState<string | null>(null)
   const [lavoro, setLavoro] = useState(false)
-  const [linkInviato, setLinkInviato] = useState(false)
+  const [linkInviato, setLinkInviato] = useState<'email' | 'nessuna_email' | null>(null)
 
   useEffect(() => {
     void urlCloudIniziale().then((u) => {
@@ -88,8 +88,8 @@ export function SchermataAccesso() {
         avvisa(t('account.verifica_avviso'))
         naviga('/', { replace: true })
       } else {
-        await creaApiCapta(url).passwordDimenticata(email.trim())
-        setLinkInviato(true)
+        const r = await creaApiCapta(url).passwordDimenticata(email.trim())
+        setLinkInviato(r.email_inviata === false ? 'nessuna_email' : 'email')
       }
     } catch (e) {
       setErrore(spiegaErrore(e, t))
@@ -113,8 +113,8 @@ export function SchermataAccesso() {
           {modo === 'registrazione' && <p className="secondario" style={{ marginBottom: 14 }}>{t('account.crea_aiuto')}</p>}
           {modo === 'password' && <p className="secondario" style={{ marginBottom: 14 }}>{t('account.password_dimenticata_aiuto')}</p>}
           {linkInviato ? (
-            <div className="avviso avviso--verde">
-              <span className="avviso__testo">{t('account.password_dimenticata_fatto')}</span>
+            <div className={`avviso ${linkInviato === 'email' ? 'avviso--verde' : 'avviso--blu'}`}>
+              <span className="avviso__testo">{linkInviato === 'email' ? t('account.password_dimenticata_fatto') : t('account.password_dimenticata_no_email')}</span>
             </div>
           ) : (
             <>
@@ -152,7 +152,7 @@ export function SchermataAccesso() {
           )}
           <div className="riga spazio-sopra-grande" style={{ justifyContent: 'space-between' }}>
             {modo !== 'accesso' ? (
-              <button type="button" className="pulsante pulsante--testo pulsante--piccolo" onClick={() => setModo('accesso')}>
+              <button type="button" className="pulsante pulsante--testo pulsante--piccolo" onClick={() => { setModo('accesso'); setLinkInviato(null) }}>
                 {t('account.accedi')}
               </button>
             ) : (

@@ -35,7 +35,8 @@ uv run capta-cloud
 | `CAPTA_CHIAVE_CIFRATURA` | chiave Fernet per i codici dei gestionali (consigliata in produzione) | derivata dalla segreta |
 | `CAPTA_URL_APP` | indirizzo dell'app, per i link nelle email | `http://localhost:5173` |
 | `CAPTA_ORIGINI` | origini ammesse (CORS), separate da virgola | `*` |
-| `CAPTA_POSTA` | `console` oppure `smtp` | `console` |
+| `CAPTA_POSTA` | `console` (sviluppo: email nel terminale), `nessuna` (link da condividere a mano), `smtp`, `brevo`, `resend` | `console` |
+| `CAPTA_VERIFICA_EMAIL` | chiedere la conferma dell'email alla registrazione (spegnerla con `nessuna`) | `true` |
 | `CAPTA_POSTA_MITTENTE`, `CAPTA_SMTP_HOST`, `CAPTA_SMTP_PORTA`, `CAPTA_SMTP_UTENTE`, `CAPTA_SMTP_PASSWORD`, `CAPTA_SMTP_TLS` | invio email in produzione | |
 | `CAPTA_INTEGRAZIONI_ATTIVE` | lavoratore che manda ai gestionali | `true` |
 | `CAPTA_ARCHIVIO_FOTO` | `disco` (cartella locale), `s3` (Object Storage, obbligatorio con più server) oppure `database` (hosting gratuiti senza disco) | `disco` |

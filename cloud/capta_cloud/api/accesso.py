@@ -37,7 +37,10 @@ def registrazione(dati: RegistrazioneIn, db: Session = Depends(sessione)) -> Acc
     db.flush()
     dispositivo = account.registra_dispositivo(db, azienda, utente, dati.dispositivo)
     token = account.crea_sessione(db, utente, dispositivo)
-    account.invia_verifica(db, azienda, utente)
+    if impostazioni().verifica_email:
+        account.invia_verifica(db, azienda, utente)
+    else:
+        utente.verificato = True  # senza servizio email l'account nasce già confermato
     account.registra(db, azienda.id, utente.id, "registrazione", {"email": email})
     db.commit()
     return AccessoOut(token=token, me=account.me_out(db, utente, azienda))
@@ -116,7 +119,10 @@ def invia_verifica(c: Contesto = Depends(contesto)) -> dict[str, bool]:
 
 @router.post("/auth/password-dimenticata")
 def password_dimenticata(dati: EmailIn, db: Session = Depends(sessione)) -> dict[str, bool]:
-    # risponde sempre ok: non rivela se l'email esiste
+    # risponde sempre ok: non rivela se l'email esiste. "email_inviata" dice se il server manda email:
+    # se no, l'app spiega di chiedere il link all'amministratore dell'azienda.
+    if not impostazioni().email_attive:
+        return {"ok": True, "email_inviata": False}
     utente = db.scalar(select(Utente).where(Utente.email == dati.email.lower(), Utente.attivo.is_(True)))
     if utente:
         azienda = db.get(Azienda, utente.azienda_id)
@@ -125,7 +131,7 @@ def password_dimenticata(dati: EmailIn, db: Session = Depends(sessione)) -> dict
             app = account.nome_app(azienda)
             posta().invia(Messaggio(a=utente.email, oggetto=testo(utente.lingua, "password_oggetto", app=app), testo=testo(utente.lingua, "password_testo", app=app, nome=utente.nome, link=link_app(f"password/{codice}"), ore=impostazioni().durata_codici_ore)))
             db.commit()
-    return {"ok": True}
+    return {"ok": True, "email_inviata": True}
 
 
 @router.post("/auth/password-reimposta")

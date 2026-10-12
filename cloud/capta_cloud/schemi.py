@@ -117,6 +117,15 @@ class InvitoOut(BaseModel):
     ruolo: str
     scade_il: str
     usato: bool
+    # presenti solo quando l'invito viene creato o rigenerato: il link non si può più rileggere dopo
+    link: str | None = None
+    email_inviata: bool | None = None
+
+
+class LinkOut(BaseModel):
+    link: str
+    scade_il: str
+    email_inviata: bool
 
 
 class UtenteModificaIn(BaseModel):

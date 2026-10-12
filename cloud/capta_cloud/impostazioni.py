@@ -44,7 +44,8 @@ class Impostazioni(BaseSettings):
     url_app: str = "http://localhost:5173"
     origini: str = "*"  # elenco separato da virgole, oppure * per tutte
 
-    # Email transazionali: console (stampa), smtp, brevo (API HTTPS), resend (API HTTPS)
+    # Email transazionali: console (stampate nel terminale, per lo sviluppo), nessuna (nessuna email: i link
+    # d'invito e di nuova password li condivide l'amministratore), smtp, brevo (API HTTPS), resend (API HTTPS)
     posta: str = "console"
     posta_mittente: str = "Capta Lead <noreply@capta-lead.it>"
     smtp_host: str = ""
@@ -54,6 +55,14 @@ class Impostazioni(BaseSettings):
     smtp_tls: bool = True
     brevo_api_key: str = ""
     resend_api_key: str = ""
+    # Conferma dell'email alla registrazione. Senza un servizio email (posta=nessuna) conviene spegnerla:
+    # gli account nascono già confermati.
+    verifica_email: bool = True
+
+    @property
+    def email_attive(self) -> bool:
+        """True se il server manda le email (in sviluppo 'console' conta come attivo: le stampa nel terminale)."""
+        return self.posta != "nessuna"
 
     # Integrazioni con i gestionali: il lavoratore in sottofondo che invia a Plexus
     integrazioni_attive: bool = True

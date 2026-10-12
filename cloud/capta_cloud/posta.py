@@ -125,6 +125,10 @@ def testo(lingua: str, chiave: str, **parametri: object) -> str:
     return (dizionario.get(chiave) or TESTI["it"][chiave]).format(**parametri)
 
 
-def link_app(percorso: str) -> str:
-    """Link dentro l'app (router con #): es. link_app('verifica/abc') → https://app/#/verifica/abc"""
-    return f"{impostazioni().url_app.rstrip('/')}/#/{percorso}"
+def link_app(percorso: str, server: str | None = None) -> str:
+    """Link dentro l'app (router con #): es. link_app('verifica/abc') → https://app/#/verifica/abc.
+    Con `server` il link porta anche l'indirizzo di Capta Cloud, così funziona su un dispositivo nuovo."""
+    from urllib.parse import quote
+
+    link = f"{impostazioni().url_app.rstrip('/')}/#/{percorso}"
+    return f"{link}?server={quote(server.rstrip('/'), safe='')}" if server else link

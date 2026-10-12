@@ -54,6 +54,15 @@ export interface InvitoCapta {
   ruolo: string
   scade_il: string
   usato: boolean
+  /** solo alla creazione: il link da condividere (si può rigenerare, non rileggere) */
+  link?: string | null
+  email_inviata?: boolean | null
+}
+
+export interface LinkCapta {
+  link: string
+  scade_il: string
+  email_inviata: boolean
 }
 
 export interface DispositivoCapta {
@@ -106,7 +115,7 @@ export function creaApiCapta(url: string, fetchImpl?: typeof fetch) {
     rinnova: (token_rinnovo: string) => c<TokenCapta>('POST', '/auth/rinnovo', { token_rinnovo }),
     esci: (token_rinnovo: string) => c<{ ok: boolean }>('POST', '/auth/uscita', { token_rinnovo }),
     verificaEmail: (codice: string) => c<{ ok: boolean }>('POST', '/auth/verifica-email', { codice }),
-    passwordDimenticata: (email: string) => c<{ ok: boolean }>('POST', '/auth/password-dimenticata', { email }),
+    passwordDimenticata: (email: string) => c<{ ok: boolean; email_inviata?: boolean }>('POST', '/auth/password-dimenticata', { email }),
     passwordReimposta: (codice: string, password: string) => c<{ ok: boolean }>('POST', '/auth/password-reimposta', { codice, password }),
     invito: (codice: string) => c<{ valido: boolean; azienda?: string; app?: string; email?: string; ruolo?: string }>('GET', `/inviti/${encodeURIComponent(codice)}`),
     accettaInvito: (codice: string, dati: { nome: string; password: string; lingua: string; dispositivo?: DispositivoIn }) => c<RispostaAccesso>('POST', `/inviti/${encodeURIComponent(codice)}/accetta`, dati),
@@ -118,6 +127,8 @@ export function creaApiCapta(url: string, fetchImpl?: typeof fetch) {
     inviti: (token: string) => c<InvitoCapta[]>('GET', '/azienda/inviti', undefined, token),
     invita: (token: string, email: string, ruolo: string) => c<InvitoCapta>('POST', '/azienda/inviti', { email, ruolo }, token),
     annullaInvito: (token: string, id: number) => c<{ ok: boolean }>('DELETE', `/azienda/inviti/${id}`, undefined, token),
+    nuovoLinkInvito: (token: string, id: number) => c<LinkCapta>('POST', `/azienda/inviti/${id}/link`, {}, token),
+    linkPassword: (token: string, utenteId: number) => c<LinkCapta>('POST', `/azienda/utenti/${utenteId}/link-password`, {}, token),
     dispositivi: (token: string) => c<DispositivoCapta[]>('GET', '/azienda/dispositivi', undefined, token),
     scollegaDispositivo: (token: string, id: number) => c<{ ok: boolean }>('DELETE', `/azienda/dispositivi/${id}`, undefined, token),
     integrazioni: (token: string) => c<IntegrazioneCapta[]>('GET', '/azienda/integrazioni', undefined, token),

@@ -1,6 +1,6 @@
 // Schermate raggiunte dai link nelle email: conferma dell'email, nuova password, invito.
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Pagina } from '../componenti/Pagina'
 import { Campo } from '../componenti/Campo'
 import { useToast } from '../componenti/Toast'
@@ -10,14 +10,19 @@ import { creaApiCapta } from '../capta/api'
 import { password_accettabile } from '../capta/password'
 import { motore } from '../sync/istanza'
 import { useMotore } from '../hooks/useMotore'
-import { spiegaErrore, urlCloudIniziale } from './SchermataAccesso'
+import { CHIAVE_URL_CLOUD, spiegaErrore, urlCloudIniziale } from './SchermataAccesso'
+import { salvaImpostazione } from '../dati/archivio'
 
+/** Indirizzo di Capta Cloud: quello scritto nel link (?server=…, per i dispositivi nuovi), poi quello in uso, poi il predefinito. */
 function useUrlCloud(): string {
   const { collegamento } = useMotore()
-  const [url, setUrl] = useState(collegamento?.tipo === 'capta' ? collegamento.url : '')
+  const [parametri] = useSearchParams()
+  const dalLink = parametri.get('server') ?? ''
+  const [url, setUrl] = useState(dalLink || (collegamento?.tipo === 'capta' ? collegamento.url : ''))
   useEffect(() => {
-    if (!url) void urlCloudIniziale().then(setUrl)
-  }, [url])
+    if (dalLink) void salvaImpostazione(CHIAVE_URL_CLOUD, dalLink)
+    else if (!url) void urlCloudIniziale().then(setUrl)
+  }, [url, dalLink])
   return url
 }
 

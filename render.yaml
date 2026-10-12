@@ -1,5 +1,6 @@
 # Capta Cloud su Render, piano gratuito (fase di test). Il database è su Neon (gratuito, permanente):
-# il suo indirizzo va incollato a mano in CAPTA_DATABASE_URL. Guida: ../docs/PUBBLICARE_CAPTA_CLOUD_GRATIS.md
+# il suo indirizzo va incollato a mano in CAPTA_DATABASE_URL. Nessun servizio email: i link d'invito e di
+# nuova password li condivide l'amministratore. Guida: docs/PUBBLICARE_CAPTA_CLOUD_GRATIS.md
 services:
   - type: web
     name: capta-cloud
@@ -24,10 +25,8 @@ services:
       - key: CAPTA_ORIGINI
         value: https://capta-lead.vercel.app
       - key: CAPTA_POSTA
-        value: brevo
-      - key: CAPTA_BREVO_API_KEY
-        sync: false
-      - key: CAPTA_POSTA_MITTENTE
-        sync: false
+        value: nessuna
+      - key: CAPTA_VERIFICA_EMAIL
+        value: "false"
       - key: CAPTA_EMAIL_PIANO_INTERNO
         sync: false

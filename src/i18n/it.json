@@ -385,7 +385,7 @@
   "amministrazione.personalizzazione": "Personalizzazione",
   "amministrazione.piano": "Piano",
   "amministrazione.invita": "Invita un collega",
-  "amministrazione.invita_aiuto": "Riceverà un'email con il link per scegliere la password.",
+  "amministrazione.invita_aiuto": "Ti diamo un link da mandare al collega: con quello sceglie la sua password.",
   "amministrazione.invito_inviato": "Invito inviato a {{email}}",
   "amministrazione.inviti_in_attesa": "Inviti in attesa",
   "amministrazione.invito_annulla": "Annulla invito",
@@ -423,5 +423,15 @@
   "lead.registrata_da": "Registrato da {{nome}}",
   "dettaglio.filtro_operatore": "Registrato da",
   "report.col_registrata_da": "Registrata da",
-  "report.per_operatore": "Per operatore"
+  "report.per_operatore": "Per operatore",
+  "amministrazione.link_invito_titolo": "Link d'invito per {{email}}",
+  "amministrazione.link_password_titolo": "Link per la nuova password di {{nome}}",
+  "amministrazione.link_aiuto": "Mandalo tu alla persona (WhatsApp, email, messaggio). Vale {{ore}} ore e si usa una volta sola.",
+  "amministrazione.link_email_inviata": "Abbiamo mandato anche un'email a {{email}}.",
+  "amministrazione.link_copia": "Copia link",
+  "amministrazione.link_copiato": "Link copiato",
+  "amministrazione.link_condividi": "Condividi",
+  "amministrazione.link_nuovo": "Nuovo link",
+  "amministrazione.link_password": "Link password",
+  "account.password_dimenticata_no_email": "Su questo server le email non sono attive: chiedi all'amministratore della tua azienda un link per scegliere una nuova password (Amministrazione → Utenti → Link password)."
 }

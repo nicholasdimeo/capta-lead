@@ -38,7 +38,10 @@ export default defineConfig({
         CAPTA_DATABASE_URL: 'sqlite:////tmp/capta-e2e.db',
         CAPTA_CARTELLA_FOTO: '/tmp/capta-e2e-foto',
         CAPTA_CHIAVE_SEGRETA: 'chiave-e2e',
-        CAPTA_POSTA: 'console',
+        // stessa configurazione della fase di test su Render: niente email, link da condividere
+        CAPTA_POSTA: 'nessuna',
+        CAPTA_VERIFICA_EMAIL: 'false',
+        CAPTA_EMAIL_PIANO_INTERNO: '@interno.prova',
         CAPTA_INTEGRAZIONI_ATTIVE: 'false',
         CAPTA_URL_APP: 'http://localhost:4173',
       },

@@ -385,7 +385,7 @@
   "amministrazione.personalizzazione": "Branding",
   "amministrazione.piano": "Plan",
   "amministrazione.invita": "Invite a colleague",
-  "amministrazione.invita_aiuto": "They will get an email with a link to choose a password.",
+  "amministrazione.invita_aiuto": "You get a link to send to your colleague: they use it to choose their password.",
   "amministrazione.invito_inviato": "Invitation sent to {{email}}",
   "amministrazione.inviti_in_attesa": "Pending invitations",
   "amministrazione.invito_annulla": "Cancel invitation",
@@ -423,5 +423,15 @@
   "lead.registrata_da": "Registered by {{nome}}",
   "dettaglio.filtro_operatore": "Registered by",
   "report.col_registrata_da": "Registered by",
-  "report.per_operatore": "By operator"
+  "report.per_operatore": "By operator",
+  "amministrazione.link_invito_titolo": "Invitation link for {{email}}",
+  "amministrazione.link_password_titolo": "New password link for {{nome}}",
+  "amministrazione.link_aiuto": "Send it to the person yourself (WhatsApp, email, message). It is valid for {{ore}} hours and can be used once.",
+  "amministrazione.link_email_inviata": "We also sent an email to {{email}}.",
+  "amministrazione.link_copia": "Copy link",
+  "amministrazione.link_copiato": "Link copied",
+  "amministrazione.link_condividi": "Share",
+  "amministrazione.link_nuovo": "New link",
+  "amministrazione.link_password": "Password link",
+  "account.password_dimenticata_no_email": "Emails are not enabled on this server: ask your company administrator for a link to choose a new password (Administration → Users → Password link)."
 }

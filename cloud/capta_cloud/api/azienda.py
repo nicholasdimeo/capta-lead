@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
 
 from ..dipendenze import Contesto, errore, solo_amministratore
 from ..impostazioni import impostazioni
 from ..modelli import Codice, Dispositivo, Integrazione, OperazioneIntegrazione, Registro, Sessione, Utente, adesso
 from ..posta import Messaggio, link_app, posta, testo
-from ..schemi import AziendaModificaIn, AziendaOut, DispositivoOut, IntegrazioneOut, IntegrazionePlexusIn, InvitoIn, InvitoOut, UtenteModificaIn, UtenteOut
+from ..schemi import AziendaModificaIn, AziendaOut, DispositivoOut, IntegrazioneOut, IntegrazionePlexusIn, InvitoIn, InvitoOut, LinkOut, UtenteModificaIn, UtenteOut
 from ..servizi import account, integrazioni, piani
 from ..servizi.plexus_client import ErrorePlexus, ClientPlexus
 from ..sicurezza import cifra, decifra
@@ -92,8 +93,13 @@ def inviti(c: Contesto = Depends(solo_amministratore)) -> list[InvitoOut]:
     return [InvitoOut(id=i.id, email=i.email, ruolo=i.ruolo or "operatore", scade_il=account.iso(i.scade_il) or "", usato=i.usato_il is not None) for i in righe]
 
 
+def _server(request: Request) -> str:
+    """Indirizzo pubblico di questo server, da mettere nei link (dietro un proxy HTTPS usa X-Forwarded-*)."""
+    return str(request.base_url).rstrip("/")
+
+
 @router.post("/inviti", response_model=InvitoOut, status_code=201)
-def invita(dati: InvitoIn, c: Contesto = Depends(solo_amministratore)) -> InvitoOut:
+def invita(dati: InvitoIn, request: Request, c: Contesto = Depends(solo_amministratore)) -> InvitoOut:
     email = dati.email.lower()
     if c.db.scalar(select(Utente.id).where(Utente.email == email)):
         raise errore(409, "Questa email ha già un account.", "email_esistente")
@@ -101,14 +107,52 @@ def invita(dati: InvitoIn, c: Contesto = Depends(solo_amministratore)) -> Invito
     if motivo:
         raise errore(402, motivo, "limite_piano")
     codice = account.crea_codice(c.db, "invito", c.azienda, email, ruolo=dati.ruolo)
-    app = account.nome_app(c.azienda)
-    lingua = c.azienda.lingua
-    posta().invia(Messaggio(a=email, oggetto=testo(lingua, "invito_oggetto", chi=c.utente.nome, azienda=c.azienda.nome, app=app), testo=testo(lingua, "invito_testo", chi=c.utente.nome, azienda=c.azienda.nome, app=app, ruolo=testo(lingua, f"ruolo_{dati.ruolo}"), link=link_app(f"invito/{codice}"), ore=impostazioni().durata_codici_ore)))
+    link = link_app(f"invito/{codice}", _server(request))
+    _manda_invito(c, email, dati.ruolo, link)
     account.registra(c.db, c.azienda.id, c.utente.id, "invito_creato", {"email": email, "ruolo": dati.ruolo})
     c.db.commit()
     nuovo = c.db.scalar(select(Codice).where(Codice.tipo == "invito", Codice.email == email, Codice.usato_il.is_(None)))
     assert nuovo is not None
-    return InvitoOut(id=nuovo.id, email=nuovo.email, ruolo=nuovo.ruolo or "operatore", scade_il=account.iso(nuovo.scade_il) or "", usato=False)
+    return InvitoOut(id=nuovo.id, email=nuovo.email, ruolo=nuovo.ruolo or "operatore", scade_il=account.iso(nuovo.scade_il) or "", usato=False, link=link, email_inviata=impostazioni().email_attive)
+
+
+def _manda_invito(c: Contesto, email: str, ruolo: str, link: str) -> None:
+    """Manda l'email d'invito se il server ha un servizio email; altrimenti il link lo condivide l'amministratore."""
+    if not impostazioni().email_attive:
+        return
+    app = account.nome_app(c.azienda)
+    lingua = c.azienda.lingua
+    posta().invia(Messaggio(a=email, oggetto=testo(lingua, "invito_oggetto", chi=c.utente.nome, azienda=c.azienda.nome, app=app), testo=testo(lingua, "invito_testo", chi=c.utente.nome, azienda=c.azienda.nome, app=app, ruolo=testo(lingua, f"ruolo_{ruolo}"), link=link, ore=impostazioni().durata_codici_ore)))
+
+
+@router.post("/inviti/{invito_id}/link", response_model=LinkOut)
+def nuovo_link_invito(invito_id: int, request: Request, c: Contesto = Depends(solo_amministratore)) -> LinkOut:
+    """Genera un nuovo link per un invito in attesa (il vecchio smette di valere)."""
+    i = c.db.get(Codice, invito_id)
+    if not i or i.azienda_id != c.azienda.id or i.tipo != "invito" or i.usato_il is not None:
+        raise errore(404, "Invito non trovato o già usato.")
+    codice = account.crea_codice(c.db, "invito", c.azienda, i.email, ruolo=i.ruolo)
+    link = link_app(f"invito/{codice}", _server(request))
+    _manda_invito(c, i.email, i.ruolo or "operatore", link)
+    nuovo = c.db.scalar(select(Codice).where(Codice.tipo == "invito", Codice.email == i.email, Codice.usato_il.is_(None)))
+    c.db.commit()
+    return LinkOut(link=link, scade_il=account.iso(nuovo.scade_il if nuovo else adesso()) or "", email_inviata=impostazioni().email_attive)
+
+
+@router.post("/utenti/{utente_id}/link-password", response_model=LinkOut)
+def link_password(utente_id: int, request: Request, c: Contesto = Depends(solo_amministratore)) -> LinkOut:
+    """L'amministratore genera il link per scegliere una nuova password (per chi l'ha dimenticata)."""
+    u = c.db.get(Utente, utente_id)
+    if not u or u.azienda_id != c.azienda.id or not u.attivo:
+        raise errore(404, "Utente non trovato.")
+    codice = account.crea_codice(c.db, "password", c.azienda, u.email, u)
+    link = link_app(f"password/{codice}", _server(request))
+    if impostazioni().email_attive:
+        app = account.nome_app(c.azienda)
+        posta().invia(Messaggio(a=u.email, oggetto=testo(u.lingua, "password_oggetto", app=app), testo=testo(u.lingua, "password_testo", app=app, nome=u.nome, link=link, ore=impostazioni().durata_codici_ore)))
+    account.registra(c.db, c.azienda.id, c.utente.id, "link_password_creato", {"utente": u.id})
+    c.db.commit()
+    return LinkOut(link=link, scade_il=account.iso(adesso() + timedelta(hours=impostazioni().durata_codici_ore)) or "", email_inviata=impostazioni().email_attive)
 
 
 @router.delete("/inviti/{invito_id}")

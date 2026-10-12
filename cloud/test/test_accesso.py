@@ -96,3 +96,40 @@ def test_invito_e_ruoli(client, posta):
     assert client.put(f"/api/v1/azienda/utenti/{marco['me']['utente']['id']}", json={"attivo": False}, headers=h).status_code == 200
     assert client.get("/api/v1/me", headers=hm).status_code == 401
     assert client.post("/api/v1/auth/rinnovo", json={"token_rinnovo": marco["token"]["token_rinnovo"]}).status_code == 401
+
+
+def test_senza_servizio_email_link_da_condividere(client, posta, monkeypatch):
+    from capta_cloud.impostazioni import impostazioni
+
+    monkeypatch.setattr(impostazioni(), "posta", "nessuna")
+    monkeypatch.setattr(impostazioni(), "verifica_email", False)
+    monkeypatch.setattr(impostazioni(), "email_piano_interno", "@sgm.it")
+    admin = registra(client)
+    assert admin["me"]["utente"]["verificato"] is True  # nessuna conferma richiesta
+    h = intestazioni(admin["token"]["token_accesso"])
+    # invito: il link torna all'amministratore, nessuna email
+    posta.inviate.clear()
+    r = client.post("/api/v1/azienda/inviti", json={"email": "marco@sgm.it", "ruolo": "operatore"}, headers=h)
+    assert r.status_code == 201, r.text
+    invito = r.json()
+    assert invito["email_inviata"] is False and invito["link"].startswith("https://app.prova/#/invito/")
+    assert invito["link"].endswith("?server=http%3A%2F%2Ftestserver")  # il link porta l'indirizzo del server
+    assert posta.inviate == []
+    # nuovo link: il vecchio non vale più
+    r = client.post(f"/api/v1/azienda/inviti/{invito['id']}/link", headers=h)
+    assert r.status_code == 200
+    vecchio, nuovo = invito["link"].split("?")[0].rsplit("/", 1)[-1], r.json()["link"].split("?")[0].rsplit("/", 1)[-1]
+    assert client.get(f"/api/v1/inviti/{vecchio}").json()["valido"] is False
+    assert client.get(f"/api/v1/inviti/{nuovo}").json()["valido"] is True
+    marco = client.post(f"/api/v1/inviti/{nuovo}/accetta", json={"nome": "Marco", "password": "segreta123"}).json()
+    # password dimenticata: il server dice che non manda email
+    assert client.post("/api/v1/auth/password-dimenticata", json={"email": "marco@sgm.it"}).json() == {"ok": True, "email_inviata": False}
+    # l'amministratore genera il link per Marco
+    r = client.post(f"/api/v1/azienda/utenti/{marco['me']['utente']['id']}/link-password", headers=h)
+    assert r.status_code == 200 and r.json()["email_inviata"] is False
+    codice = r.json()["link"].split("?")[0].rsplit("/", 1)[-1]
+    assert client.post("/api/v1/auth/password-reimposta", json={"codice": codice, "password": "nuovissima1"}).status_code == 200
+    assert client.post("/api/v1/auth/accesso", json={"email": "marco@sgm.it", "password": "nuovissima1"}).status_code == 200
+    # un operatore non può generare link
+    hm = intestazioni(client.post("/api/v1/auth/accesso", json={"email": "marco@sgm.it", "password": "nuovissima1"}).json()["token"]["token_accesso"])
+    assert client.post(f"/api/v1/azienda/utenti/{marco['me']['utente']['id']}/link-password", headers=hm).status_code == 403

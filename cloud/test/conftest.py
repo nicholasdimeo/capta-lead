@@ -66,5 +66,5 @@ def leggi_link(testo: str) -> str:
     """Estrae il codice dal link dentro un'email (…/#/verifica/<codice>)."""
     for riga in testo.splitlines():
         if "/#/" in riga:
-            return riga.strip().rsplit("/", 1)[-1]
+            return riga.strip().split("?")[0].rsplit("/", 1)[-1]
     raise AssertionError("nessun link nell'email")

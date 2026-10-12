@@ -9,7 +9,7 @@ import { useToast } from '../componenti/Toast'
 import { useConferma } from '../componenti/Modale'
 import { useT } from '../i18n'
 import { brand, testoIn } from '../config/brand'
-import { creaApiCapta, type DispositivoCapta, type IntegrazioneCapta, type InvitoCapta, type UtenteCapta } from '../capta/api'
+import { creaApiCapta, type DispositivoCapta, type IntegrazioneCapta, type InvitoCapta, type LinkCapta, type UtenteCapta } from '../capta/api'
 import { useMotore } from '../hooks/useMotore'
 import { motore } from '../sync/istanza'
 import { formattaDataOra } from '../utils/date'
@@ -69,6 +69,51 @@ function useCaricamento<T>(carica: () => Promise<T>): [T | null, () => void, str
   return [dati, () => setVersione((v) => v + 1), errore]
 }
 
+/** Ore di validità dei link d'invito e di nuova password (stesso valore del server). */
+const ORE_LINK = 48
+
+/** Riquadro con un link da mandare a mano: copia negli appunti o "Condividi" del telefono. */
+function BoxLink({ titolo, link, emailInviataA, onChiudi }: { titolo: string; link: string; emailInviataA?: string | null; onChiudi: () => void }) {
+  const { t } = useT()
+  const avvisa = useToast()
+  const puoCondividere = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+  async function copia() {
+    try {
+      await navigator.clipboard.writeText(link)
+      avvisa(t('amministrazione.link_copiato'), 'verde')
+    } catch {
+      // appunti non disponibili: si seleziona il testo, così si copia a mano
+      const campo = document.getElementById('box-link-testo') as HTMLInputElement | null
+      campo?.select()
+    }
+  }
+  return (
+    <div className="card card--evidenza" role="status">
+      <div className="card__titolo">
+        <h3>{titolo}</h3>
+        <button type="button" className="pulsante pulsante--testo pulsante--piccolo" onClick={onChiudi}>
+          {t('comune.chiudi')}
+        </button>
+      </div>
+      <input id="box-link-testo" className="campo__input" readOnly value={link} onFocus={(e) => e.target.select()} aria-label={titolo} />
+      <p className="mini spazio-sopra">
+        {t('amministrazione.link_aiuto', { ore: ORE_LINK })}
+        {emailInviataA ? ` ${t('amministrazione.link_email_inviata', { email: emailInviataA })}` : ''}
+      </p>
+      <div className="riga spazio-sopra">
+        <button type="button" className="pulsante" onClick={() => void copia()}>
+          {t('amministrazione.link_copia')}
+        </button>
+        {puoCondividere && (
+          <button type="button" className="pulsante pulsante--secondario" onClick={() => void navigator.share({ title: titolo, url: link }).catch(() => undefined)}>
+            {t('amministrazione.link_condividi')}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function SezioneUtenti({ api }: { api: Api }) {
   const { t, lingua } = useT()
   const avvisa = useToast()
@@ -83,11 +128,31 @@ function SezioneUtenti({ api }: { api: Api }) {
   const [email, setEmail] = useState('')
   const [ruolo, setRuolo] = useState('operatore')
   const [lavoro, setLavoro] = useState(false)
+  const [linkMostrato, setLinkMostrato] = useState<{ titolo: string; link: string; emailInviataA?: string | null } | null>(null)
+  function mostraLink(titolo: string, l: Pick<LinkCapta, 'link' | 'email_inviata'>, email: string) {
+    setLinkMostrato({ titolo, link: l.link, emailInviataA: l.email_inviata ? email : null })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  async function nuovoLink(i: InvitoCapta) {
+    try {
+      mostraLink(t('amministrazione.link_invito_titolo', { email: i.email }), await api.nuovoLinkInvito(await motore.tokenValido(), i.id), i.email)
+    } catch (e) {
+      avvisa(spiegaErrore(e, t), 'rosso', 5000)
+    }
+  }
+  async function linkPassword(u: UtenteCapta) {
+    try {
+      mostraLink(t('amministrazione.link_password_titolo', { nome: u.nome }), await api.linkPassword(await motore.tokenValido(), u.id), u.email)
+    } catch (e) {
+      avvisa(spiegaErrore(e, t), 'rosso', 5000)
+    }
+  }
   async function invita() {
     setLavoro(true)
     try {
-      await api.invita(await motore.tokenValido(), email.trim(), ruolo)
-      avvisa(t('amministrazione.invito_inviato', { email: email.trim() }), 'verde')
+      const invito = await api.invita(await motore.tokenValido(), email.trim(), ruolo)
+      if (invito.link) mostraLink(t('amministrazione.link_invito_titolo', { email: invito.email }), { link: invito.link, email_inviata: Boolean(invito.email_inviata) }, invito.email)
+      else avvisa(t('amministrazione.invito_inviato', { email: email.trim() }), 'verde')
       setEmail('')
       ricarica()
     } catch (e) {
@@ -118,6 +183,7 @@ function SezioneUtenti({ api }: { api: Api }) {
   }
   return (
     <>
+      {linkMostrato && <BoxLink {...linkMostrato} onChiudi={() => setLinkMostrato(null)} />}
       <div className="card">
         <div className="card__titolo">
           <div>
@@ -171,6 +237,11 @@ function SezioneUtenti({ api }: { api: Api }) {
                       <option value="operatore">{t('account.ruolo_operatore')}</option>
                       <option value="amministratore">{t('account.ruolo_amministratore')}</option>
                     </select>
+                    {u.attivo && (
+                      <button type="button" className="pulsante pulsante--neutro pulsante--piccolo" onClick={() => void linkPassword(u)}>
+                        {t('amministrazione.link_password')}
+                      </button>
+                    )}
                     <button type="button" className={`pulsante pulsante--piccolo ${u.attivo ? 'pulsante--pericolo' : 'pulsante--secondario'}`} onClick={() => void cambia(u, { attivo: !u.attivo })}>
                       {u.attivo ? t('amministrazione.disattiva') : t('amministrazione.riattiva')}
                     </button>
@@ -190,9 +261,14 @@ function SezioneUtenti({ api }: { api: Api }) {
                     <div className="grassetto">{i.email}</div>
                     <div className="mini">{t(i.ruolo === 'amministratore' ? 'account.ruolo_amministratore' : 'account.ruolo_operatore')}</div>
                   </div>
-                  <button type="button" className="pulsante pulsante--neutro pulsante--piccolo" onClick={() => void annulla(i)}>
-                    {t('amministrazione.invito_annulla')}
-                  </button>
+                  <div className="riga" style={{ gap: 6 }}>
+                    <button type="button" className="pulsante pulsante--secondario pulsante--piccolo" onClick={() => void nuovoLink(i)}>
+                      {t('amministrazione.link_nuovo')}
+                    </button>
+                    <button type="button" className="pulsante pulsante--neutro pulsante--piccolo" onClick={() => void annulla(i)}>
+                      {t('amministrazione.invito_annulla')}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
