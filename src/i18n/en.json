@@ -433,5 +433,12 @@
   "amministrazione.link_condividi": "Share",
   "amministrazione.link_nuovo": "New link",
   "amministrazione.link_password": "Password link",
-  "account.password_dimenticata_no_email": "Emails are not enabled on this server: ask your company administrator for a link to choose a new password (Administration → Users → Password link)."
+  "account.password_dimenticata_no_email": "Emails are not enabled on this server: ask your company administrator for a link to choose a new password (Administration → Users → Password link).",
+  "amministrazione.file_titolo": "Configuration from file",
+  "amministrazione.file_aiuto": "Upload a ready-made configuration file (company name, product lines, privacy notice, questionnaire, categories) or download the current one as a backup.",
+  "amministrazione.file_importa": "Import from file",
+  "amministrazione.file_esporta": "Download configuration",
+  "amministrazione.file_importato": "Configuration imported: {{voci}}",
+  "amministrazione.file_non_valido": "The file is not a valid configuration.",
+  "amministrazione.file_conferma": "Import the file? The entries in the file replace the current ones."
 }

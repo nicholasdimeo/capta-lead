@@ -1,12 +1,15 @@
 // Schermata iniziale: elenco degli eventi con numero di contatti e stato rispetto a Plexus.
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
+import { CHIAVE_SENZA_ACCOUNT } from './SchermataAccesso'
+import { useLiveQuery as useLiveQueryImpostazione } from 'dexie-react-hooks'
+import { db } from '../dati/db'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Pagina, Vuoto } from '../componenti/Pagina'
 import { Pillola } from '../componenti/Pillola'
 import { IconaPiu, IconaCalendario } from '../componenti/Icone'
 import { useT } from '../i18n'
-import { brand, testoIn } from '../config/brand'
+import { brand, lineeAttive, testoIn } from '../config/brand'
 import { contaLeadPerEvento, elencoEventi } from '../dati/archivio'
 import { useCollegato, useMotore, useOperazioniAperte } from '../hooks/useMotore'
 import { statoInvioEvento } from '../sync/motore'
@@ -18,11 +21,19 @@ export function SchermataEventi() {
   const conteggi = useLiveQuery(() => contaLeadPerEvento(), [])
   const operazioni = useOperazioniAperte()
   const collegato = useCollegato()
-  const { collegamento } = useMotore()
+  const { collegamento, pronto } = useMotore()
+  // undefined = sto leggendo; la scelta "senza account" fatta in passato
+  const sceltaSenzaAccount = useLiveQueryImpostazione(async () => ((await db.impostazioni.get(CHIAVE_SENZA_ACCOUNT))?.valore as boolean | undefined) ?? false, [])
   const oggi = oggiIso()
   const [mostraArchiviati, setMostraArchiviati] = useState(false)
   const archiviati = (eventi ?? []).filter((e) => e.archiviato)
   const visibili = (eventi ?? []).filter((e) => mostraArchiviati || !e.archiviato)
+
+  // Prima apertura, senza account e senza aver scelto di farne a meno: si parte dalla schermata di accesso.
+  // Chi ha già dati sul dispositivo (versioni precedenti dell'app) resta sugli eventi.
+  // Finché non si sa (collegamento salvato, scelta, eventi), non si mostra nulla: niente sfarfallio.
+  if (!pronto || sceltaSenzaAccount === undefined || eventi === undefined) return null
+  if (!collegamento && sceltaSenzaAccount === false && eventi.length === 0) return <Navigate to="/accesso" replace />
 
   return (
     <Pagina titolo={brand.app.nome} sottotitolo={brand.azienda.nome} mostraImpostazioni>
@@ -78,7 +89,7 @@ export function SchermataEventi() {
                 </div>
                 <div className="pillole spazio-sopra">
                   <Pillola>{tp('eventi.lead', n)}</Pillola>
-                  <Pillola tono="blu">{testoIn(brand.linee[e.linea], lingua) || e.linea}</Pillola>
+                  {lineeAttive() && <Pillola tono="blu">{testoIn(brand.linee[e.linea], lingua) || e.linea}</Pillola>}
                   {inCorso && <Pillola tono="verde" punto>{t('eventi.in_corso')}</Pillola>}
                   {futuro && <Pillola tono="ambra">{t('eventi.futuro')}</Pillola>}
                   {!inCorso && !futuro && (e.data_inizio || e.data_fine) && <Pillola>{t('eventi.passato')}</Pillola>}

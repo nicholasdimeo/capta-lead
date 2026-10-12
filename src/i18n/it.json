@@ -433,5 +433,12 @@
   "amministrazione.link_condividi": "Condividi",
   "amministrazione.link_nuovo": "Nuovo link",
   "amministrazione.link_password": "Link password",
-  "account.password_dimenticata_no_email": "Su questo server le email non sono attive: chiedi all'amministratore della tua azienda un link per scegliere una nuova password (Amministrazione → Utenti → Link password)."
+  "account.password_dimenticata_no_email": "Su questo server le email non sono attive: chiedi all'amministratore della tua azienda un link per scegliere una nuova password (Amministrazione → Utenti → Link password).",
+  "amministrazione.file_titolo": "Configurazione da file",
+  "amministrazione.file_aiuto": "Carica un file di configurazione già pronto (nome dell'azienda, linee, informativa, questionario, categorie) oppure scarica quella attuale come copia di sicurezza.",
+  "amministrazione.file_importa": "Importa da file",
+  "amministrazione.file_esporta": "Scarica configurazione",
+  "amministrazione.file_importato": "Configurazione importata: {{voci}}",
+  "amministrazione.file_non_valido": "Il file non è una configurazione valida.",
+  "amministrazione.file_conferma": "Importare il file? Le voci presenti nel file sostituiscono quelle attuali."
 }

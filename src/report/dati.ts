@@ -100,7 +100,9 @@ export function calcolaRiepilogo(c: ContenutoReport): Riepilogo {
   }
 }
 
+/** Nome della linea di prodotti; vuoto se l'azienda non distingue linee. */
 export function etichettaLinea(linea: string, lingua: Lingua): string {
+  if (Object.keys(brand.linee).length <= 1) return ''
   return testoIn(brand.linee[linea], lingua) || linea
 }
 

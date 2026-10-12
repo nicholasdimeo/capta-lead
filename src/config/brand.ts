@@ -195,6 +195,11 @@ function filtraStringhe(valore: Record<string, unknown> | undefined): Record<str
   return esito
 }
 
+/** true se l'azienda distingue più linee di prodotti (altrimenti il campo "linea" non si mostra). */
+export function lineeAttive(): boolean {
+  return Object.keys(brand.linee).length > 1
+}
+
 /** Prende il testo nella lingua richiesta, altrimenti nella principale, altrimenti il primo disponibile. */
 export function testoIn(valore: TestoMultilingua | undefined, lingua: Lingua, principale: Lingua = brand.lingue.principale): string {
   if (valore === undefined) return ''

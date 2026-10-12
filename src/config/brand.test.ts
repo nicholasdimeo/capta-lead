@@ -1,17 +1,28 @@
 import { describe, it, expect } from 'vitest'
 import { brand, validaBrand, normalizzaQuestionario, testoIn } from './brand'
+import configurazioneSgm from '../../config/aziende/sgm-pharma.json'
 
 describe('configurazione brand', () => {
-  it('il brand.json del progetto è valido e completo', () => {
-    expect(brand.app.nome).toBeTruthy()
-    expect(brand.azienda.nome).toBeTruthy()
+  it('il brand.json del progetto è valido, completo e neutro (nessuna azienda cliente)', () => {
+    expect(brand.app.nome).toBe('Capta Lead')
+    expect(brand.azienda.nome).toBe('')
     expect(Object.keys(brand.lingue.disponibili)).toContain(brand.lingue.principale)
     expect(brand.questionario_predefinito.length).toBeGreaterThan(0)
     expect(brand.questionario_predefinito.filter((d) => d.consenso)).toHaveLength(1)
     expect(brand.categorie_predefinite.length).toBeGreaterThan(0)
     expect(brand.tema.accento).toMatch(/^#[0-9a-f]{6}$/i)
-    expect(testoIn(brand.privacy.testo, 'it')).toContain('SGM Pharma')
-    expect(testoIn(brand.privacy.testo, 'en')).toContain('SGM Pharma')
+    expect(Object.keys(brand.linee)).toEqual(['generale'])
+    for (const testo of [testoIn(brand.privacy.testo, 'it'), testoIn(brand.privacy.testo, 'en'), JSON.stringify(brand.questionario_predefinito)]) {
+      expect(testo).not.toMatch(/SGM|REGENFLEX|TIADERM/i)
+    }
+  })
+
+  it('la configurazione di SGM Pharma (da importare nell\'azienda) è valida', () => {
+    const sgm = validaBrand(configurazioneSgm, '')
+    expect(sgm.azienda.nome).toBe('SGM Pharma')
+    expect(Object.keys(sgm.linee)).toEqual(['ortopedia', 'estetica', 'entrambe'])
+    expect(sgm.questionario_predefinito.filter((d) => d.consenso)).toHaveLength(1)
+    expect(testoIn(sgm.privacy.testo, 'it')).toContain('SGM Pharma')
   })
 
   it('con un file vuoto usa valori di riserva sensati senza rompersi', () => {

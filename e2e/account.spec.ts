@@ -62,8 +62,9 @@ test('registrazione, contatto condiviso con il cloud, uscita e nuovo accesso', a
   await page.getByRole('button', { name: 'Esci' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Esci' }).click()
   await page.evaluate(() => indexedDB.deleteDatabase('leadstand'))
-  await page.reload()
-  await page.getByRole('link', { name: 'Accedi' }).first().click()
+  await page.goto('/') // si riapre l'app dalla schermata iniziale
+  // dispositivo "vuoto": l'app si apre direttamente sulla schermata di accesso
+  await expect(page.getByRole('button', { name: 'Accedi', exact: true })).toBeVisible()
   await impostaServer(page) // l'archivio è stato cancellato: anche l'indirizzo del server va reinserito
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password', { exact: true }).fill('segreta123')

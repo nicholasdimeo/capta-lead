@@ -19,6 +19,10 @@ export async function dumpFinto(request: APIRequestContext) {
 /** Apre l'app e aspetta che il service worker sia attivo (serve per le prove offline). */
 export async function apriApp(page: Page): Promise<void> {
   await page.goto('/')
+  // un dispositivo nuovo parte dalla schermata di accesso: qui scegliamo di usare l'app senza account
+  const senzaAccount = page.getByRole('link', { name: 'Continua senza account' })
+  await expect(senzaAccount.or(page.getByRole('heading', { name: 'Eventi' }))).toBeVisible()
+  if (await senzaAccount.isVisible()) await senzaAccount.click()
   await expect(page.getByRole('heading', { name: 'Eventi' })).toBeVisible()
   await page.waitForFunction(async () => {
     const reg = await navigator.serviceWorker?.ready
@@ -65,9 +69,15 @@ export async function registraContatto(page: Page, dati: DatiContatto): Promise<
   await page.getByRole('button', { name: 'Avanti' }).click()
   // passo 2: questionario
   await expect(page.getByRole('heading', { name: 'Qualche domanda veloce' })).toBeVisible()
-  await page.getByRole('button', { name: 'Medico estetico' }).click()
-  await page.getByRole('button', { name: 'Un campione' }).click()
-  await page.getByRole('button', { name: 'Il listino' }).click()
+  // questionario neutro di Capta Lead oppure quello di SGM (eventi arrivati dal finto Plexus)
+  if (await page.getByRole('button', { name: 'Un preventivo' }).count()) {
+    await page.getByRole('button', { name: 'Informazioni sui prodotti' }).click()
+    await page.getByRole('button', { name: 'Un preventivo' }).click()
+  } else {
+    await page.getByRole('button', { name: 'Medico estetico' }).click()
+    await page.getByRole('button', { name: 'Un campione' }).click()
+    await page.getByRole('button', { name: 'Il listino' }).click()
+  }
   await page.getByRole('button', { name: dati.consenso ?? 'Sì', exact: true }).click()
   await page.getByRole('button', { name: 'Avanti' }).click()
   // passo 3: categoria, note, foto

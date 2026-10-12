@@ -10,7 +10,7 @@ import { useUrlBlob } from '../componenti/Foto'
 import { IconaCerca, IconaFoglio, IconaMatita, IconaPersona, IconaPiu, IconaSync } from '../componenti/Icone'
 import { useToast } from '../componenti/Toast'
 import { useT, type FunzioneT } from '../i18n'
-import { brand, testoIn } from '../config/brand'
+import { brand, lineeAttive, testoIn } from '../config/brand'
 import { leggiEvento, leadDiEvento, filtraLead, type FiltriLead } from '../dati/archivio'
 import { db } from '../dati/db'
 import type { Foto, Lead } from '../dati/tipi'
@@ -142,7 +142,7 @@ export function SchermataEvento() {
           )}
         </div>
         <div className="riga spazio-sopra" style={{ justifyContent: 'space-between' }}>
-          <Pillola tono="blu">{testoIn(brand.linee[evento.linea], lingua) || evento.linea}</Pillola>
+          {lineeAttive() ? <Pillola tono="blu">{testoIn(brand.linee[evento.linea], lingua) || evento.linea}</Pillola> : <span />}
           <div className="riga" style={{ gap: 6 }}>
             <button type="button" className="pulsante pulsante--neutro pulsante--piccolo" onClick={() => void report('xlsx')} disabled={reportInCorso !== null || !lead?.length}>
               {reportInCorso === 'xlsx' ? <span className="caricamento caricamento--scuro" /> : <IconaFoglio dimensione={16} />} {t('dettaglio.report_excel')}

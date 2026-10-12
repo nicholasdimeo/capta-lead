@@ -224,7 +224,7 @@ def salva_plexus(dati: IntegrazionePlexusIn, c: Contesto = Depends(solo_amminist
     i.attiva = dati.attiva
     i.stato = "ok"
     i.ultimo_errore = ""
-    i.dettagli = {"azienda": stato.get("azienda"), "utente": stato.get("utente"), "api": stato.get("api"), "posta_lead_pronta": stato.get("posta_lead_pronta"), "verificata_il": account.iso(adesso())}
+    i.dettagli = {"azienda": stato.get("azienda"), "utente": stato.get("utente"), "api": stato.get("api"), "posta_lead_pronta": stato.get("posta_lead_pronta"), "linee": list((stato.get("linee") or {}).keys()), "verificata_il": account.iso(adesso())}
     c.db.flush()
     if nuova or dati.attiva:
         integrazioni.accoda_tutto(c.db, c.azienda.id)

@@ -10,10 +10,13 @@ import { brand } from '../config/brand'
 import { creaApiCapta, ErroreCapta } from '../capta/api'
 import { leggiImpostazione, salvaImpostazione } from '../dati/archivio'
 import { useMotore } from '../hooks/useMotore'
+import { useImpostazione } from '../hooks/useImpostazioni'
 import { motore } from '../sync/istanza'
 import { password_accettabile } from '../capta/password'
 
 export const CHIAVE_URL_CLOUD = 'cloud_url'
+/** Salvata quando l'utente sceglie "Continua senza account": da lì in poi l'app si apre sugli eventi. */
+export const CHIAVE_SENZA_ACCOUNT = 'senza_account'
 
 /** Indirizzo di Capta Cloud da usare: l'ultimo usato, poi quello della configurazione, poi quello di sviluppo. */
 export async function urlCloudIniziale(): Promise<string> {
@@ -43,6 +46,7 @@ export function SchermataAccesso() {
   const avvisa = useToast()
   const [parametri] = useSearchParams()
   const { collegamento } = useMotore()
+  const senzaAccount = useImpostazione<boolean>(CHIAVE_SENZA_ACCOUNT, false)
   const [modo, setModo] = useState<Modo>((parametri.get('modo') as Modo) || 'accesso')
   const [url, setUrl] = useState('')
   const [urlCaricato, setUrlCaricato] = useState(false)
@@ -101,7 +105,7 @@ export function SchermataAccesso() {
   const titolo = modo === 'accesso' ? t('account.accedi') : modo === 'registrazione' ? t('account.crea_titolo') : t('account.password_dimenticata_titolo')
 
   return (
-    <Pagina titolo={titolo} indietro="/">
+    <Pagina titolo={titolo} indietro={collegamento || senzaAccount ? '/' : undefined}>
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -183,7 +187,15 @@ export function SchermataAccesso() {
 
         <div className="card">
           <p className="secondario">{t('account.senza_account_aiuto')}</p>
-          <Link to="/" className="pulsante pulsante--neutro spazio-sopra">
+          <Link
+            to="/"
+            className="pulsante pulsante--neutro spazio-sopra"
+            onClick={(e) => {
+              // prima si salva la scelta, poi si va agli eventi (altrimenti la pagina eventi rimanderebbe qui)
+              e.preventDefault()
+              void salvaImpostazione(CHIAVE_SENZA_ACCOUNT, true).then(() => naviga('/', { replace: true }))
+            }}
+          >
             {t('account.senza_account')}
           </Link>
         </div>

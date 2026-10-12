@@ -31,7 +31,7 @@ test('contatto registrato offline (con foto): al ritorno della rete arriva al fi
   const dump = await dumpFinto(request)
   expect(dump.lead).toHaveLength(1)
   expect(dump.lead[0]).toMatchObject({ nome: 'Anna', cognome: 'Bianchi', email: 'anna@clinica.it', consenso: 'S', categoria: 'caldo', note: 'vuole il listino' })
-  expect(dump.lead[0].risposte['Cosa le interessa ricevere?']).toBe('Un campione, Il listino')
+  expect(dump.lead[0].risposte['Cosa le interessa ricevere?']).toBe('Informazioni sui prodotti, Un preventivo')
   expect(dump.lead[0].uuid).toMatch(/^[0-9a-f-]{36}$/)
   expect(dump.foto).toHaveLength(2)
   expect(dump.foto.map((f) => f.tipo).sort()).toEqual(['biglietto', 'volto'])

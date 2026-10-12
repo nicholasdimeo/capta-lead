@@ -1,5 +1,24 @@
 # Adattare Capta Lead a un'altra azienda
 
+## Con Capta Cloud (il modo normale)
+
+L'app è una sola per tutti e il file `config/brand.json` è **neutro** (solo "Capta Lead"). Ogni azienda
+cliente ha la sua configurazione dentro Capta Cloud, che l'app scarica e applica dopo l'accesso: nome
+dell'azienda, linee di prodotti, informativa privacy, questionario predefinito, categorie, professioni, colori.
+
+- L'amministratore dell'azienda la imposta da *Amministrazione → Personalizzazione*, oppure carica un file
+  già pronto con *Importa da file*.
+- I file pronti stanno in `config/aziende/` (es. `config/aziende/sgm-pharma.json`): hanno le stesse voci
+  di `brand.json` (`azienda`, `linee`, `linea_predefinita`, `privacy`, `questionario_predefinito`,
+  `categorie_predefinite`, `professioni_suggerite`, `tema`…). Per un nuovo cliente si copia quello di SGM
+  e si cambiano i testi.
+- Se un'azienda non ha linee di prodotti, il campo "linea" sparisce dall'app.
+
+## Senza Capta Cloud (app "in proprio")
+
+Quello che segue vale se si vuole un'app dedicata a una sola azienda, con il suo nome già dentro
+(modificando il file e ricostruendo l'app).
+
 L'app è costruita per essere "white label": per cambiare azienda non si tocca il codice, ma solo la
 cartella `config/` (più, se vuoi, i testi dell'interfaccia). Poi si ricostruisce l'app.
 

@@ -52,7 +52,7 @@ export function creaPlexusFinto(): PlexusFinto {
         note: '', lingua: 'it', linea: 'estetica', ringraziamento_attivo: true, archiviato: false,
         questionario: [
           { domanda: 'Qual è il suo ruolo?', opzioni: ['Medico estetico', 'Altro'], multipla: false },
-          { domanda: 'Acconsente a ricevere comunicazioni da SGM Pharma?', opzioni: ['Sì', 'No'], multipla: false, consenso: true },
+          { domanda: 'Acconsente a ricevere comunicazioni commerciali?', opzioni: ['Sì', 'No'], multipla: false, consenso: true },
         ],
         categorie_suggerite: ['caldo', 'curioso'],
         ...campi,

@@ -8,7 +8,7 @@ import { IconaCestino, IconaGiu, IconaPiu, IconaSu } from '../componenti/Icone'
 import { useToast } from '../componenti/Toast'
 import { useConferma } from '../componenti/Modale'
 import { useT } from '../i18n'
-import { brand, testoIn } from '../config/brand'
+import { brand, lineeAttive, testoIn } from '../config/brand'
 import { creaEvento, aggiornaEvento, archiviaEvento, eliminaEvento, leggiEvento, type CampiEvento } from '../dati/archivio'
 import { useCollegato, useOperazioniAperte } from '../hooks/useMotore'
 import { Pillola } from '../componenti/Pillola'
@@ -250,6 +250,7 @@ export function SchermataModificaEvento() {
             <Campo etichetta={t('evento.data_fine')} type="date" value={campi.data_fine} min={campi.data_inizio || undefined} onChange={(e) => setCampi({ ...campi, data_fine: e.target.value })} />
           </div>
           <div className="griglia-campi griglia-campi--2">
+{lineeAttive() && (
             <CampoSelect etichetta={t('evento.linea')} value={campi.linea} onChange={(e) => setCampi({ ...campi, linea: e.target.value })}>
               {Object.keys(brand.linee).map((k) => (
                 <option key={k} value={k}>
@@ -257,6 +258,7 @@ export function SchermataModificaEvento() {
                 </option>
               ))}
             </CampoSelect>
+            )}
             <CampoSelect etichetta={t('evento.lingua')} value={campi.lingua} onChange={(e) => setCampi({ ...campi, lingua: e.target.value })}>
               {Object.entries(brand.lingue.disponibili).map(([k, nome]) => (
                 <option key={k} value={k}>

@@ -53,7 +53,8 @@ export interface CorpoEvento {
   data_fine: string
   note: string
   lingua: string
-  linea: string
+  /** facoltativa: si manda solo se Plexus conosce quella linea */
+  linea?: string
   ringraziamento_attivo?: boolean
   categorie_suggerite?: string[]
   questionario?: DomandaPlexus[]

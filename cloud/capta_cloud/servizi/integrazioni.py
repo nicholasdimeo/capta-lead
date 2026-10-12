@@ -88,12 +88,16 @@ def questionario_per_plexus(questionario: list) -> list[dict]:
     return esito
 
 
-def corpo_evento(e: Evento) -> dict:
-    return {
+def corpo_evento(e: Evento, linee_note: list[str] | None = None) -> dict:
+    corpo = {
         "nome": e.nome, "luogo": e.luogo, "data_inizio": e.data_inizio, "data_fine": e.data_fine, "note": e.note,
-        "lingua": e.lingua, "linea": e.linea, "ringraziamento_attivo": e.ringraziamento_attivo,
+        "lingua": e.lingua, "ringraziamento_attivo": e.ringraziamento_attivo,
         "categorie_suggerite": list(e.categorie_suggerite or []), "questionario": questionario_per_plexus(e.questionario),
     }
+    # la linea va solo se Plexus la conosce (es. un'azienda senza linee usa "generale", che Plexus rifiuterebbe)
+    if e.linea and (not linee_note or e.linea in linee_note):
+        corpo["linea"] = e.linea
+    return corpo
 
 
 def corpo_lead(l: Lead) -> dict:
@@ -124,7 +128,7 @@ def esegui_operazione(db: Session, client: ClientPlexus, integrazione: Integrazi
         e = db.get(Evento, op.riferimento_id)
         if not e:
             return False
-        corpo = corpo_evento(e)
+        corpo = corpo_evento(e, list((integrazione.dettagli or {}).get("linee") or []))
         if e.gestionale_id is None:
             risposta = client.crea_evento({"uuid": e.uuid, **corpo})
             e.gestionale_id = int(risposta["evento"]["id"])

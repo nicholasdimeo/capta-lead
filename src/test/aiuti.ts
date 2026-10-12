@@ -4,7 +4,11 @@ import { MotoreSincronizzazione, CHIAVE_COLLEGAMENTO } from '../sync/motore'
 import { salvaImpostazione, type CampiEvento } from '../dati/archivio'
 import type { CollegamentoPlexus } from '../dati/tipi'
 import { creaPlexusFinto, type PlexusFinto } from './plexus-finto'
-import { brand } from '../config/brand'
+import { brand, normalizzaQuestionario } from '../config/brand'
+import configurazioneSgm from '../../config/aziende/sgm-pharma.json'
+
+/** Questionario di prova (quello di SGM Pharma): i test non dipendono da quello neutro di brand.json. */
+export const QUESTIONARIO_PROVA = normalizzaQuestionario(configurazioneSgm.questionario_predefinito)
 
 let contatore = 0
 
@@ -21,7 +25,7 @@ export const CAMPI_EVENTO_PROVA: CampiEvento = {
   note: '',
   lingua: 'it',
   linea: 'ortopedia',
-  questionario: brand.questionario_predefinito,
+  questionario: QUESTIONARIO_PROVA,
   categorie_suggerite: [...brand.categorie_predefinite],
   ringraziamento_attivo: true,
   archiviato: false,

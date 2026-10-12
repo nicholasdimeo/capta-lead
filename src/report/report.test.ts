@@ -3,18 +3,17 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import ExcelJS from 'exceljs'
 import { PDFDocument } from 'pdf-lib'
-import { archivioNuovo, CAMPI_EVENTO_PROVA, blobFinto } from '../test/aiuti'
+import { archivioNuovo, CAMPI_EVENTO_PROVA, blobFinto, QUESTIONARIO_PROVA } from '../test/aiuti'
 import { creaEvento, creaLead, aggiungiFoto } from '../dati/archivio'
 import { calcolaRiepilogo, raccogliContenuto, nomeFileReport, opzioniScelte, coloreRgb } from './dati'
 import { generaExcel } from './excel'
 import { generaPdf } from './pdf'
 import { tPer } from '../i18n'
-import { brand } from '../config/brand'
 
 const t = tPer('it')
-const DOMANDA_RUOLO = brand.questionario_predefinito[0].domanda
-const DOMANDA_MULTI = brand.questionario_predefinito[1].domanda
-const DOMANDA_CONSENSO = brand.questionario_predefinito.find((d) => d.consenso)!.domanda
+const DOMANDA_RUOLO = QUESTIONARIO_PROVA[0].domanda
+const DOMANDA_MULTI = QUESTIONARIO_PROVA[1].domanda
+const DOMANDA_CONSENSO = QUESTIONARIO_PROVA.find((d) => d.consenso)!.domanda
 
 // un JPEG minuscolo ma valido (1x1 pixel) per provare le miniature nel PDF
 const JPEG_1PX = Buffer.from(

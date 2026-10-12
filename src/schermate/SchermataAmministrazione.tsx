@@ -412,10 +412,49 @@ function righe(testo: string): string[] {
   return testo.split('\n').map((r) => r.trim()).filter(Boolean)
 }
 
+/** Voci che un file di configurazione può contenere (le stesse accettate da Capta Cloud). */
+const CHIAVI_FILE = ['azienda', 'tema', 'lingue', 'linee', 'linea_predefinita', 'categorie_predefinite', 'professioni_suggerite', 'tipi_foto', 'privacy', 'questionario_predefinito', 'app']
+
 function SezionePersonalizzazione({ api }: { api: Api }) {
   const { t } = useT()
   const avvisa = useToast()
-  const [conf, , errore] = useCaricamento<Record<string, unknown>>(async () => api.configurazione(await motore.tokenValido()))
+  const conferma = useConferma()
+  const [conf, ricaricaConf, errore] = useCaricamento<Record<string, unknown>>(async () => api.configurazione(await motore.tokenValido()))
+
+  async function importa(file: File | undefined) {
+    if (!file) return
+    let dati: Record<string, unknown>
+    try {
+      const letto = JSON.parse(await file.text()) as unknown
+      if (!letto || typeof letto !== 'object' || Array.isArray(letto)) throw new Error('non è un oggetto')
+      dati = Object.fromEntries(Object.entries(letto as Record<string, unknown>).filter(([k]) => CHIAVI_FILE.includes(k)))
+      if (Object.keys(dati).length === 0) throw new Error('nessuna voce riconosciuta')
+    } catch {
+      avvisa(t('amministrazione.file_non_valido'), 'rosso', 5000)
+      return
+    }
+    const ok = await conferma({ titolo: t('amministrazione.file_importa'), testo: t('amministrazione.file_conferma'), testoConferma: t('amministrazione.file_importa') })
+    if (!ok) return
+    try {
+      await api.salvaConfigurazione(await motore.tokenValido(), { ...(conf ?? {}), ...dati })
+      await motore.aggiornaAccount()
+      setCaricato(false)
+      ricaricaConf()
+      avvisa(t('amministrazione.file_importato', { voci: Object.keys(dati).join(', ') }), 'verde', 5000)
+    } catch (e) {
+      avvisa(spiegaErrore(e, t), 'rosso', 5000)
+    }
+  }
+
+  function esporta() {
+    const blob = new Blob([JSON.stringify(conf ?? {}, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'configurazione-capta-lead.json'
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 10_000)
+  }
   const [nomeApp, setNomeApp] = useState('')
   const [nomeAzienda, setNomeAzienda] = useState('')
   const [categorie, setCategorie] = useState('')
@@ -481,6 +520,23 @@ function SezionePersonalizzazione({ api }: { api: Api }) {
       }}
       noValidate
     >
+      <div className="card">
+        <div className="card__titolo">
+          <div>
+            <h2>{t('amministrazione.file_titolo')}</h2>
+            <p className="mini">{t('amministrazione.file_aiuto')}</p>
+          </div>
+        </div>
+        <div className="riga">
+          <label className="pulsante pulsante--secondario" style={{ cursor: 'pointer' }}>
+            {t('amministrazione.file_importa')}
+            <input type="file" accept="application/json,.json" className="nascosto-visivamente" onChange={(e) => void importa(e.target.files?.[0]).finally(() => (e.target.value = ''))} />
+          </label>
+          <button type="button" className="pulsante pulsante--neutro" onClick={esporta} disabled={!conf}>
+            {t('amministrazione.file_esporta')}
+          </button>
+        </div>
+      </div>
       <div className="card">
         <p className="mini" style={{ marginBottom: 14 }}>{t('amministrazione.personalizzazione_aiuto')}</p>
         {errore && <p className="campo__errore">{errore}</p>}

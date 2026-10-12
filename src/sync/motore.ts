@@ -36,6 +36,8 @@ export interface EsitoSync {
 }
 
 export interface StatoMotore {
+  /** true quando il collegamento salvato è stato letto (prima non si sa ancora se c'è un account) */
+  pronto?: boolean
   inCorso: boolean
   ultimaSync: string | null
   ultimoEsito: EsitoSync | null
@@ -114,7 +116,7 @@ export class MotoreSincronizzazione {
     const collegamento = await leggiImpostazione<CollegamentoPlexus | null>(CHIAVE_COLLEGAMENTO, null, this.archivio)
     const ultimaSync = await leggiImpostazione<string | null>(CHIAVE_ULTIMA_SYNC, null, this.archivio)
     await this.archivio.coda.where('stato').equals('in_corso').modify({ stato: 'in_attesa' })
-    this.aggiorna({ collegamento, ultimaSync })
+    this.aggiorna({ collegamento, ultimaSync, pronto: true })
   }
 
   /** prepara() + automatismi: parte subito, poi a ogni salvataggio, al ritorno della rete, quando l'app torna visibile e a intervalli. */
@@ -602,7 +604,7 @@ export class MotoreSincronizzazione {
           data_fine: evento.data_fine,
           note: evento.note,
           lingua: evento.lingua,
-          linea: evento.linea,
+          ...(lineaPerPlexus(evento.linea, this.stato.collegamento) ? { linea: evento.linea } : {}),
           questionario: questionarioPerPlexus(evento.questionario, v11),
         }
         if (v11) {
@@ -612,7 +614,7 @@ export class MotoreSincronizzazione {
         if (evento.plexus_id === null || (!v11 && evento.origine === 'app')) {
           // Plexus non conosce ancora l'evento (o è una 1.0: il POST con lo stesso uuid vale come aggiornamento)
           if (evento.origine !== 'app') return false
-          const { evento: scheda } = await client.creaEvento({ uuid: evento.uuid, ...campi, nome: evento.nome, luogo: evento.luogo, data_inizio: evento.data_inizio, data_fine: evento.data_fine, note: evento.note, lingua: evento.lingua, linea: evento.linea })
+          const { evento: scheda } = await client.creaEvento({ uuid: evento.uuid, ...campi, nome: evento.nome, luogo: evento.luogo, data_inizio: evento.data_inizio, data_fine: evento.data_fine, note: evento.note, lingua: evento.lingua, ...(campi.linea ? { linea: campi.linea } : {}) })
           await this.archivio.eventi.update(evento.uuid, { plexus_id: scheda.id, ringraziamento_attivo: scheda.ringraziamento_attivo !== false })
           if (evento.archiviato && v11) await client.modificaEvento(scheda.id, { archiviato: true })
           return true
@@ -713,6 +715,14 @@ const PRIORITA: Record<Operazione['tipo'], number> = { invia_evento: 0, aggiorna
 /** Ordina le operazioni così che ciò da cui dipendono le altre venga sempre prima (a parità, per ordine di creazione). */
 export function ordinaPerDipendenza(operazioni: Operazione[]): Operazione[] {
   return [...operazioni].sort((a, b) => PRIORITA[a.tipo] - PRIORITA[b.tipo] || (a.id ?? 0) - (b.id ?? 0))
+}
+
+/** Manda la linea a Plexus solo se Plexus la conosce (GET /stato → linee); con Capta Cloud decide il server. */
+function lineaPerPlexus(linea: string, c: CollegamentoPlexus | null): boolean {
+  if (!linea) return false
+  if (!c || c.tipo === 'capta') return true
+  const conosciute = Object.keys(c.linee ?? {})
+  return conosciute.length === 0 || conosciute.includes(linea)
 }
 
 /** Costruisce il corpo di POST /eventi/{id}/lead a partire da una lead locale (solo campi del contratto). */

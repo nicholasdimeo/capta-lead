@@ -6,8 +6,8 @@
     "descrizione": "Raccolta contatti allo stand, anche senza rete"
   },
   "azienda": {
-    "nome": "SGM Pharma",
-    "sito": "https://www.sgmpharma.it"
+    "nome": "",
+    "sito": ""
   },
   "tema": {
     "font": "Public Sans",
@@ -37,21 +37,6 @@
       "en": "English"
     }
   },
-  "linee": {
-    "ortopedia": {
-      "it": "Ortopedia (REGENFLEX)",
-      "en": "Orthopaedics (REGENFLEX)"
-    },
-    "estetica": {
-      "it": "Medicina estetica (TIADERM)",
-      "en": "Aesthetic medicine (TIADERM)"
-    },
-    "entrambe": {
-      "it": "Entrambe le linee",
-      "en": "Both lines"
-    }
-  },
-  "linea_predefinita": "entrambe",
   "categorie_predefinite": [
     "caldo",
     "da ricontattare",
@@ -59,13 +44,11 @@
     "curioso"
   ],
   "professioni_suggerite": [
-    "Medico estetico",
-    "Ortopedico",
-    "Fisiatra",
-    "Fisioterapista",
-    "Farmacista",
-    "Dermatologo",
-    "Chirurgo plastico",
+    "Titolare",
+    "Responsabile acquisti",
+    "Tecnico",
+    "Commerciale",
+    "Libero professionista",
     "Distributore",
     "Altro"
   ],
@@ -89,57 +72,34 @@
       "en": "Privacy notice"
     },
     "testo": {
-      "it": "I dati raccolti (nome, contatti, risposte al questionario ed eventuali fotografie) saranno trattati da SGM Pharma per rispondere alla sua richiesta di informazioni e, solo con il suo consenso, per inviarle comunicazioni commerciali sui nostri prodotti. Può revocare il consenso in qualsiasi momento scrivendo a privacy@sgmpharma.it. Informativa completa su www.sgmpharma.it/privacy.",
-      "en": "The data collected (name, contact details, questionnaire answers and any photographs) will be processed by SGM Pharma to answer your request for information and, only with your consent, to send you commercial communications about our products. You can withdraw your consent at any time by writing to privacy@sgmpharma.it. Full notice at www.sgmpharma.it/privacy."
+      "it": "I dati raccolti (nome, contatti, risposte al questionario ed eventuali fotografie) saranno trattati dall'azienda presente allo stand per rispondere alla sua richiesta di informazioni e, solo con il suo consenso, per inviarle comunicazioni commerciali. Può revocare il consenso in qualsiasi momento scrivendo all'azienda. L'informativa completa è disponibile su richiesta.",
+      "en": "The data collected (name, contact details, questionnaire answers and any photographs) will be processed by the company at the stand to answer your request for information and, only with your consent, to send you commercial communications. You can withdraw your consent at any time by writing to the company. The full notice is available on request."
     }
   },
   "questionario_predefinito": [
     {
-      "domanda": "Qual è il suo ruolo?",
-      "opzioni": [
-        "Medico estetico",
-        "Ortopedico / Fisiatra",
-        "Farmacista",
-        "Distributore",
-        "Altro"
-      ],
-      "multipla": false,
-      "traduzioni": {
-        "en": {
-          "domanda": "What is your role?",
-          "opzioni": [
-            "Aesthetic doctor",
-            "Orthopaedist / Physiatrist",
-            "Pharmacist",
-            "Distributor",
-            "Other"
-          ]
-        }
-      }
-    },
-    {
       "domanda": "Cosa le interessa ricevere?",
       "opzioni": [
-        "Un campione",
-        "Il listino",
-        "Una visita del nostro agente",
-        "Materiale scientifico"
+        "Informazioni sui prodotti",
+        "Un preventivo",
+        "Essere ricontattato",
+        "Materiale tecnico"
       ],
       "multipla": true,
       "traduzioni": {
         "en": {
           "domanda": "What would you like to receive?",
           "opzioni": [
-            "A sample",
-            "The price list",
-            "A visit from our agent",
-            "Scientific material"
+            "Product information",
+            "A quote",
+            "To be contacted",
+            "Technical material"
           ]
         }
       }
     },
     {
-      "domanda": "Acconsente a ricevere comunicazioni da SGM Pharma?",
+      "domanda": "Acconsente a ricevere comunicazioni commerciali?",
       "opzioni": [
         "Sì",
         "No"
@@ -148,7 +108,7 @@
       "consenso": true,
       "traduzioni": {
         "en": {
-          "domanda": "Do you agree to receive communications from SGM Pharma?",
+          "domanda": "Do you agree to receive commercial communications?",
           "opzioni": [
             "Yes",
             "No"

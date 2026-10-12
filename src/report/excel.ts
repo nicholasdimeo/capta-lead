@@ -70,7 +70,7 @@ export async function generaExcel(c: ContenutoReport, t: FunzioneT): Promise<Blo
   titolo(c.evento.nome)
   r.addRow([t('report.luogo'), c.evento.luogo])
   r.addRow([t('report.date'), formattaIntervallo(c.evento.data_inizio, c.evento.data_fine, c.lingua)])
-  r.addRow([t('report.linea'), etichettaLinea(c.evento.linea, c.lingua)])
+  if (etichettaLinea(c.evento.linea, c.lingua)) r.addRow([t('report.linea'), etichettaLinea(c.evento.linea, c.lingua)])
   r.addRow([])
   titolo(t('report.totale_contatti'))
   r.addRow([t('report.totale_contatti'), riepilogo.totale])
