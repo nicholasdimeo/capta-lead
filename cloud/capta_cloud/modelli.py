@@ -179,6 +179,17 @@ class Foto(Base):
     __table_args__ = (UniqueConstraint("azienda_id", "uuid", name="uq_foto_uuid"),)
 
 
+class FileFoto(Base):
+    """Il contenuto di una foto, quando l'archivio scelto è il database (CAPTA_ARCHIVIO_FOTO=database)."""
+
+    __tablename__ = "file_foto"
+
+    percorso: Mapped[str] = mapped_column(String(400), primary_key=True)
+    mime: Mapped[str] = mapped_column(String(80), default="image/jpeg")
+    contenuto: Mapped[bytes] = mapped_column(LargeBinary)
+    creato_il: Mapped[datetime] = mapped_column(DateTime, default=adesso)
+
+
 class Integrazione(Base):
     """Collegamento di un'azienda a un gestionale (per ora: plexus). Il codice è cifrato."""
 

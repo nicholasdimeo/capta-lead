@@ -1,5 +1,7 @@
 """Dove stanno i file delle foto: su disco (sviluppo, o un solo server) oppure su un Object Storage
-compatibile S3 (produzione con più server). Il database conserva solo il percorso relativo."""
+compatibile S3 (produzione con più server) oppure nel database stesso (hosting gratuiti senza disco
+persistente: comodo per la fase di test, va bene per qualche migliaio di foto). Le schede delle foto
+conservano solo il percorso relativo."""
 
 from __future__ import annotations
 
@@ -31,6 +33,30 @@ class ArchivioDisco:
             return None
 
 
+class ArchivioDatabase:
+    """Foto salvate in una tabella del database (file_foto)."""
+
+    def salva(self, percorso: str, contenuto: bytes, mime: str) -> None:
+        from .db import fabbrica_sessioni
+        from .modelli import FileFoto
+
+        with fabbrica_sessioni()() as db:
+            esistente = db.get(FileFoto, percorso)
+            if esistente:
+                esistente.contenuto, esistente.mime = contenuto, mime
+            else:
+                db.add(FileFoto(percorso=percorso, mime=mime, contenuto=contenuto))
+            db.commit()
+
+    def leggi(self, percorso: str) -> bytes | None:
+        from .db import fabbrica_sessioni
+        from .modelli import FileFoto
+
+        with fabbrica_sessioni()() as db:
+            f = db.get(FileFoto, percorso)
+            return bytes(f.contenuto) if f else None
+
+
 class ArchivioS3:
     """Object Storage compatibile S3 (Scaleway, Hetzner, Backblaze, AWS…) tramite boto3."""
 
@@ -60,6 +86,8 @@ def archivio_foto() -> ArchivioFoto:
     imp = impostazioni()
     if imp.archivio_foto == "s3":
         return ArchivioS3()
+    if imp.archivio_foto == "database":
+        return ArchivioDatabase()
     return ArchivioDisco(imp.cartella_foto)
 
 

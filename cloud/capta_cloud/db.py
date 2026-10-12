@@ -15,6 +15,14 @@ class Base(DeclarativeBase):
     pass
 
 
+def normalizza_url_database(url: str) -> str:
+    """Gli hosting danno "postgres://…" o "postgresql://…": SQLAlchemy vuole il driver esplicito (psycopg 3)."""
+    for prefisso in ("postgres://", "postgresql://"):
+        if url.startswith(prefisso):
+            return "postgresql+psycopg://" + url[len(prefisso):]
+    return url
+
+
 _motore: Engine | None = None
 _Sessione: sessionmaker[Session] | None = None
 
@@ -22,7 +30,7 @@ _Sessione: sessionmaker[Session] | None = None
 def motore() -> Engine:
     global _motore, _Sessione
     if _motore is None:
-        url = impostazioni().database_url
+        url = normalizza_url_database(impostazioni().database_url)
         argomenti = {"check_same_thread": False} if url.startswith("sqlite") else {}
         _motore = create_engine(url, connect_args=argomenti, pool_pre_ping=True)
         if url.startswith("sqlite"):

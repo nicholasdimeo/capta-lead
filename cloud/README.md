@@ -38,7 +38,8 @@ uv run capta-cloud
 | `CAPTA_POSTA` | `console` oppure `smtp` | `console` |
 | `CAPTA_POSTA_MITTENTE`, `CAPTA_SMTP_HOST`, `CAPTA_SMTP_PORTA`, `CAPTA_SMTP_UTENTE`, `CAPTA_SMTP_PASSWORD`, `CAPTA_SMTP_TLS` | invio email in produzione | |
 | `CAPTA_INTEGRAZIONI_ATTIVE` | lavoratore che manda ai gestionali | `true` |
-| `CAPTA_ARCHIVIO_FOTO` | `disco` (cartella locale) oppure `s3` (Object Storage, obbligatorio con più server) | `disco` |
+| `CAPTA_ARCHIVIO_FOTO` | `disco` (cartella locale), `s3` (Object Storage, obbligatorio con più server) oppure `database` (hosting gratuiti senza disco) | `disco` |
+| `CAPTA_EMAIL_PIANO_INTERNO` | email o domini (`@azienda.it`) con piano "interno" senza limiti, separati da virgola | |
 | `CAPTA_S3_BUCKET`, `CAPTA_S3_ENDPOINT`, `CAPTA_S3_REGIONE`, `CAPTA_S3_CHIAVE`, `CAPTA_S3_SEGRETO`, `CAPTA_S3_PREFISSO` | dati dell'Object Storage compatibile S3 | |
 | `CAPTA_POSTA` = `brevo` + `CAPTA_BREVO_API_KEY`, oppure `resend` + `CAPTA_RESEND_API_KEY` | email tramite API HTTPS (consigliato: nessuna porta SMTP da sbloccare) | |
 
@@ -51,6 +52,9 @@ C'è un `Dockerfile`: va bene per Railway, Fly.io, Render o un server con Docker
 sulla porta `PORT` (8100 se non impostata). In produzione servono almeno: `CAPTA_CHIAVE_SEGRETA`,
 `CAPTA_CHIAVE_CIFRATURA`, `CAPTA_DATABASE_URL` (PostgreSQL), `CAPTA_URL_APP`, `CAPTA_ORIGINI`,
 `CAPTA_POSTA` con la sua chiave, e, con più istanze, `CAPTA_ARCHIVIO_FOTO=s3` con i dati del bucket.
+
+Per la fase di test gratuita (Render + Neon + Brevo) c'è il file `render.yaml` nella cartella principale
+e la guida [../docs/PUBBLICARE_CAPTA_CLOUD_GRATIS.md](../docs/PUBBLICARE_CAPTA_CLOUD_GRATIS.md).
 
 ## Come è fatto
 

@@ -28,7 +28,8 @@ def registrazione(dati: RegistrazioneIn, db: Session = Depends(sessione)) -> Acc
     email = dati.email.lower()
     if db.scalar(select(Utente.id).where(Utente.email == email)):
         raise errore(409, "Esiste già un account con questa email.", "email_esistente")
-    azienda = Azienda(nome=dati.azienda_nome.strip(), slug=account.slug_azienda(db, dati.azienda_nome), lingua=dati.lingua, piano="prova", configurazione={})
+    piano = "interno" if impostazioni().piano_interno_per(email) else "prova"
+    azienda = Azienda(nome=dati.azienda_nome.strip(), slug=account.slug_azienda(db, dati.azienda_nome), lingua=dati.lingua, piano=piano, configurazione={})
     db.add(azienda)
     db.flush()
     utente = Utente(azienda_id=azienda.id, email=email, nome=dati.nome.strip(), password_hash=hash_password(dati.password), ruolo="amministratore", lingua=dati.lingua, ultimo_accesso=adesso())
@@ -53,6 +54,8 @@ def accesso(dati: AccessoIn, db: Session = Depends(sessione)) -> AccessoOut:
     if not azienda or not azienda.attiva:
         raise errore(403, "L'azienda non è attiva.", "azienda_non_attiva")
     utente.ultimo_accesso = adesso()
+    if azienda.piano == "prova" and impostazioni().piano_interno_per(utente.email):
+        azienda.piano = "interno"  # email aggiunta all'elenco dopo la registrazione
     dispositivo = account.registra_dispositivo(db, azienda, utente, dati.dispositivo)
     token = account.crea_sessione(db, utente, dispositivo)
     account.registra(db, azienda.id, utente.id, "accesso", {"dispositivo": dati.dispositivo.nome if dati.dispositivo else ""})

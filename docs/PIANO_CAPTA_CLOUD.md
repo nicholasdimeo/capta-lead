@@ -97,6 +97,13 @@ registro consensi, cancellazione/esportazione), gestione dispositivi, assegnazio
 Pagamenti (per evento e annuale), sito di presentazione, registrazione in autonomia, onboarding,
 altre lingue, documentazione per i clienti.
 
+## Hosting
+
+- **Fase di test (ora)**: tutto gratuito — Render Free + Neon Free + Brevo Free, foto nel database.
+  Guida: [PUBBLICARE_CAPTA_CLOUD_GRATIS.md](PUBBLICARE_CAPTA_CLOUD_GRATIS.md).
+- **Quando si vende**: piani a pagamento (Render o Railway), PostgreSQL con backup, foto su Object Storage.
+- Non sui server di Plexus (gestiti da Toso Lab per SGM Pharma): Capta Lead è un prodotto separato.
+
 ## Prezzi di partenza (da verificare con i primi clienti)
 
 - Gratuito: 1 utente, 1 evento attivo, 50 contatti, report.

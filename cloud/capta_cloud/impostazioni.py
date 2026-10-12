@@ -22,7 +22,8 @@ class Impostazioni(BaseSettings):
 
     ambiente: str = "sviluppo"  # sviluppo | produzione | test
     database_url: str = f"sqlite:///{CARTELLA_BASE / 'dati' / 'capta.db'}"
-    # Foto: "disco" (cartella locale) oppure "s3" (Object Storage compatibile S3, per più server)
+    # Foto: "disco" (cartella locale), "s3" (Object Storage compatibile S3, per più server)
+    # oppure "database" (dentro PostgreSQL: per gli hosting gratuiti senza disco persistente)
     archivio_foto: str = "disco"
     cartella_foto: Path = CARTELLA_BASE / "dati" / "foto"
     s3_bucket: str = ""
@@ -57,6 +58,17 @@ class Impostazioni(BaseSettings):
     # Integrazioni con i gestionali: il lavoratore in sottofondo che invia a Plexus
     integrazioni_attive: bool = True
     integrazioni_intervallo_secondi: int = 10
+
+    # Email (o domini, scritti come "@azienda.it") che ottengono il piano "interno", senza limiti:
+    # serve per la fase di test in azienda. Separati da virgola.
+    email_piano_interno: str = ""
+
+    def piano_interno_per(self, email: str) -> bool:
+        email = email.strip().lower()
+        for voce in (v.strip().lower() for v in self.email_piano_interno.split(",")):
+            if voce and (email == voce or (voce.startswith("@") and email.endswith(voce))):
+                return True
+        return False
 
     # Limiti generali
     foto_dimensione_massima_byte: int = 12 * 1024 * 1024

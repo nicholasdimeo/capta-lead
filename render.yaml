@@ -1,0 +1,33 @@
+# Capta Cloud su Render, piano gratuito (fase di test). Il database è su Neon (gratuito, permanente):
+# il suo indirizzo va incollato a mano in CAPTA_DATABASE_URL. Guida: ../docs/PUBBLICARE_CAPTA_CLOUD_GRATIS.md
+services:
+  - type: web
+    name: capta-cloud
+    runtime: docker
+    plan: free
+    region: frankfurt
+    rootDir: cloud
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/salute
+    autoDeploy: true
+    envVars:
+      - key: CAPTA_AMBIENTE
+        value: produzione
+      - key: CAPTA_CHIAVE_SEGRETA
+        generateValue: true
+      - key: CAPTA_DATABASE_URL
+        sync: false
+      - key: CAPTA_ARCHIVIO_FOTO
+        value: database
+      - key: CAPTA_URL_APP
+        value: https://capta-lead.vercel.app
+      - key: CAPTA_ORIGINI
+        value: https://capta-lead.vercel.app
+      - key: CAPTA_POSTA
+        value: brevo
+      - key: CAPTA_BREVO_API_KEY
+        sync: false
+      - key: CAPTA_POSTA_MITTENTE
+        sync: false
+      - key: CAPTA_EMAIL_PIANO_INTERNO
+        sync: false
